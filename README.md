@@ -1,10 +1,6 @@
 # AenSanctum
-一个基于 Next.js 开发的色图托管网站。
+An image hosting website built with Next.js.
 
-## 开发中
+## Under Development
 
-本项目仍在开发中,欢迎提出建议和贡献代码。
-
-## 免责声明
-
-本网站仅供学习交流使用,请勿上传违法内容。对于用户上传的内容,本站不承担任何法律责任。
+This project is still under development.
