@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { getAlbumById } from '@/lib/album'
+import { getSessionUser } from '@/lib/session/getSession'
 
 // 获取某个图集
 export async function GET(
@@ -9,25 +9,8 @@ export async function GET(
 ) {
     try {
         const { id } = await params
-        const cookieStore = await cookies()
-        const cookie = cookieStore.get('auth')?.value
-        if (!cookie) {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 })
-        }
-        const userId = cookieStore.get('userId')?.value
-        if (!userId) {
-            return NextResponse.json({
-              error: {
-                message: '用户ID未找到',
-                code: 'USER_NOT_FOUND'
-              }
-            }, { status: 401 })
-        }
+        const session = await getSessionUser()
+        
         const album = await getAlbumById(parseInt(id))
         if (!album) {
             return NextResponse.json({
@@ -37,7 +20,7 @@ export async function GET(
               }
             }, { status: 404 })
         }
-        const isOwner = album.owner.id === parseInt(userId)
+        const isOwner = album.owner.id === session.id
         if (album.isPrivate && !isOwner) {
             return NextResponse.json({
               error: {
@@ -50,7 +33,15 @@ export async function GET(
             album.albumPictures = album.albumPictures.filter(p => !p.isPrivate)
         }
         return NextResponse.json(album)
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+            return NextResponse.json({
+              error: {
+                message: '未登录',
+                code: 'UNAUTHORIZED'
+              }
+            }, { status: 401 })
+        }
         return NextResponse.json({
           error: {
             message: '获取图集失败',

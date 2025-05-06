@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { getAlbumById, updateAlbum, deleteAlbum, updateAlbumPictures } from '@/lib/album';
+import { getSessionUser } from '@/lib/session/getSession';
 import prisma from '@/lib/db';
 
 //删除我的图集
@@ -10,28 +10,7 @@ export async function DELETE(
 ) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const authCookie = cookieStore.get('auth');
-
-        if (!authCookie || authCookie.value !== 'true') {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 });
-        }
-
-        const userId = cookieStore.get('userId')?.value;
-
-        if (!userId) {
-            return NextResponse.json({
-              error: {
-                message: '用户ID未找到',
-                code: 'USER_NOT_FOUND'
-              }
-            }, { status: 401 });
-        }
+        const session = await getSessionUser();
 
         const albumId = parseInt(id);
 
@@ -53,7 +32,7 @@ export async function DELETE(
               }
             }, { status: 404 });
         }
-        if (album.owner.id !== parseInt(userId)) {
+        if (album.owner.id !== session.id) {
             return NextResponse.json({
               error: {
                 message: '非法请求',
@@ -64,7 +43,15 @@ export async function DELETE(
         await deleteAlbum(albumId);
 
         return NextResponse.json({ success: true, message: '图集删除成功' }, { status: 200 });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+            return NextResponse.json({
+              error: {
+                message: '未登录',
+                code: 'UNAUTHORIZED'
+              }
+            }, { status: 401 })
+        }
         return NextResponse.json({
             error: {
                 message: '删除图集失败',
@@ -74,8 +61,6 @@ export async function DELETE(
     }
 }
 
-
-
 // 更新我的图集
 export async function PUT(
     request: Request,
@@ -83,28 +68,7 @@ export async function PUT(
 ) {
     try {
         const { id } = await params;
-        const cookieStore = await cookies();
-        const authCookie = cookieStore.get('auth');
-
-        if (!authCookie || authCookie.value !== 'true') {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 });
-        }
-
-        const userId = cookieStore.get('userId')?.value;
-
-        if (!userId) {
-            return NextResponse.json({
-              error: {
-                message: '用户ID未找到',
-                code: 'USER_NOT_FOUND'
-              }
-            }, { status: 401 });
-        }
+        const session = await getSessionUser();
 
         const { name, tags, addPictures, removePictures, isPrivate } = await request.json();
         const albumId = parseInt(id);
@@ -127,7 +91,7 @@ export async function PUT(
               }
             }, { status: 404 });
         }
-        if (currentAlbum.owner.id !== parseInt(userId)) {
+        if (currentAlbum.owner.id !== session.id) {
             return NextResponse.json({
               error: {
                 message: '非法请求',
@@ -160,7 +124,15 @@ export async function PUT(
             success: true,
             message: '图集更新成功'
         }, { status: 200 });
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+            return NextResponse.json({
+              error: {
+                message: '未登录',
+                code: 'UNAUTHORIZED'
+              }
+            }, { status: 401 })
+        }
         return NextResponse.json({
             error: {
                 message: '更新图集失败',

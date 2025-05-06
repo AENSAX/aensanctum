@@ -1,6 +1,6 @@
-import { deletePicture, getPictureById, updatePicture } from "@/lib/picture";
+import { getPictureById } from "@/lib/picture";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { getSessionUser } from '@/lib/session/getSession'
 
 // 获取图片详情
 export async function GET(
@@ -9,25 +9,8 @@ export async function GET(
 ) {
     try {
         const { id } = await params
-        const cookieStore = await cookies();
-        const auth = cookieStore.get('auth')?.value
-        if (!auth) {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 })
-        }
-        const userId = cookieStore.get('userId')?.value
-        if (!userId) {
-            return NextResponse.json({
-              error: {
-                message: '用户ID未找到',
-                code: 'USER_NOT_FOUND'
-              }
-            }, { status: 401 })
-        }
+        const session = await getSessionUser()
+        
         const picture = await getPictureById(parseInt(id))
         if (!picture) {
             return NextResponse.json({
@@ -37,7 +20,7 @@ export async function GET(
               }
             }, { status: 404 })
         }
-        if (picture.isPrivate && picture.owner.id !== parseInt(userId)) {
+        if (picture.isPrivate && picture.owner.id !== session.id) {
             return NextResponse.json({
               error: {
                 message: '图片是私有的',
@@ -46,7 +29,15 @@ export async function GET(
             }, { status: 403 })
         }
         return NextResponse.json(picture)
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+            return NextResponse.json({
+              error: {
+                message: '未登录',
+                code: 'UNAUTHORIZED'
+              }
+            }, { status: 401 })
+        }
         return NextResponse.json({
           error: {
             message: '获取图片失败',

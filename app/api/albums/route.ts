@@ -1,34 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createAlbum, getAllAlbums } from '@/lib/album'
-import { cookies } from 'next/headers'
+import { getSessionUser } from '@/lib/session/getSession'
 
 // 获取所有图集
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('auth')
-
-    if (!authCookie || authCookie.value !== 'true') {
-      return NextResponse.json({
-        error: {
-          message: '未登录',
-          code: 'UNAUTHORIZED'
-        }
-      }, { status: 401 })
-    }
-    const userId = cookieStore.get('userId')?.value
-    if (!userId) {
-      return NextResponse.json({
-        error: {
-          message: '用户ID未找到',
-          code: 'USER_NOT_FOUND'
-        }
-      }, { status: 401 })
-    }
+    const session = await getSessionUser()
 
     const albums = await getAllAlbums()
     const filteredAlbums = albums.filter(album => {
-      const isOwner = album.owner.id === parseInt(userId)
+      const isOwner = album.owner.id === session.id
       if (isOwner) {
         return true
       }
@@ -36,7 +17,7 @@ export async function GET() {
     })
     for (const filteredAlbum of filteredAlbums) {
       filteredAlbum.albumPictures = filteredAlbum.albumPictures.filter(p => {
-        const isOwner = p.owner.id === parseInt(userId)
+        const isOwner = p.owner.id === session.id
         if (isOwner) {
           return true
         }
@@ -44,7 +25,15 @@ export async function GET() {
       })
     }
     return NextResponse.json(filteredAlbums)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({
+        error: {
+          message: '未登录',
+          code: 'UNAUTHORIZED'
+        }
+      }, { status: 401 })
+    }
     return NextResponse.json({
       error: {
         message: '获取图集列表失败',
@@ -57,31 +46,9 @@ export async function GET() {
 // 创建图集
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('auth')
-
-    if (!authCookie || authCookie.value !== 'true') {
-      return NextResponse.json({
-        error: {
-          message: '未登录',
-          code: 'UNAUTHORIZED'
-        }
-      }, { status: 401 })
-    }
-
-    // 从 cookie 中获取用户ID
-    const userId = cookieStore.get('userId')?.value
-    if (!userId) {
-      return NextResponse.json({
-        error: {
-          message: '用户ID未找到',
-          code: 'USER_NOT_FOUND'
-        }
-      }, { status: 401 })
-    }
+    const session = await getSessionUser()
 
     // 解析请求体
-    
     const { name, tags } = await request.json()
     if (!name) {
       return NextResponse.json({
@@ -93,9 +60,17 @@ export async function POST(request: Request) {
     }
 
     // 创建图集
-    const album = await createAlbum(name, tags, parseInt(userId))
+    const album = await createAlbum(name, tags, session.id)
     return NextResponse.json(album)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({
+        error: {
+          message: '未登录',
+          code: 'UNAUTHORIZED'
+        }
+      }, { status: 401 })
+    }
     return NextResponse.json({
       error: {
         message: '创建图集失败',

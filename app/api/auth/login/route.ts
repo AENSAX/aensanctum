@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { findUserByEmail } from '@/lib/user';
 import { sessionOptions } from '@/lib/session/sessionOptions';
 import { getIronSession } from 'iron-session';
-import { cookies } from 'next/headers';
+import { getSessionUser } from '@/lib/session/getSession';
 
 export async function POST(request: Request) {
   try {
@@ -48,8 +48,9 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const session = await getIronSession<SessionUser>(cookieStore, sessionOptions);
+
+    const session = await getSessionUser();
+    
     if (!session.id) {
       return NextResponse.json({
         error: { message: '未登录', code: 'UNAUTHORIZED' }

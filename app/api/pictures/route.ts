@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getAllPictures, createPicture, deletePicture } from '@/lib/picture'
-import { cookies } from 'next/headers'
+import { getAllPictures, createPicture } from '@/lib/picture'
+import { getSessionUser } from '@/lib/session/getSession'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -17,17 +17,7 @@ const s3 = new S3Client({
 // 上传图片
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const userId = cookieStore.get('userId')?.value
-
-    if (!userId) {
-      return NextResponse.json({
-        error: {
-          message: '未登录',
-          code: 'UNAUTHORIZED'
-        }
-      }, { status: 401 })
-    }
+    const session = await getSessionUser()
 
     const formData = await request.formData()
     const title = formData.get('title') as string
@@ -75,9 +65,17 @@ export async function POST(request: Request) {
     const url = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${key}`
 
     // 创建数据库记录
-    const picture = await createPicture(title, tags, parseInt(userId), url)
+    const picture = await createPicture(title, tags, session.id, url)
     return NextResponse.json(picture)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({
+        error: {
+          message: '未登录',
+          code: 'UNAUTHORIZED'
+        }
+      }, { status: 401 })
+    }
     return NextResponse.json({
       error: {
         message: '上传图片失败',
@@ -90,37 +88,26 @@ export async function POST(request: Request) {
 // 获取所有图片
 export async function GET() {
   try {
-    const cookieStore = await cookies()
-    const authCookie = cookieStore.get('auth')
-
-    if (!authCookie || authCookie.value !== 'true') {
-      return NextResponse.json({
-        error: {
-          message: '未登录',
-          code: 'UNAUTHORIZED'
-        }
-      }, { status: 401 })
-    }
-
-    const userId = cookieStore.get('userId')?.value
-    if (!userId) {
-      return NextResponse.json({
-        error: {
-          message: '未登录',
-          code: 'UNAUTHORIZED'
-        }
-      }, { status: 401 })
-    }
+    const session = await getSessionUser()
+    
     const pictures = await getAllPictures()
     const filteredPictures = pictures.filter(picture => {
-      const isOwner = picture.owner.id === parseInt(userId)
+      const isOwner = picture.owner.id === session.id
       if (isOwner) {
         return true
       }
       return !picture.isPrivate
     })
     return NextResponse.json(filteredPictures)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'UNAUTHORIZED') {
+      return NextResponse.json({
+        error: {
+          message: '未登录',
+          code: 'UNAUTHORIZED'
+        }
+      }, { status: 401 })
+    }
     return NextResponse.json({
       error: {
         message: '获取图片列表失败',

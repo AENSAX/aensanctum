@@ -1,29 +1,26 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { getAlbumsByOwnerId } from '@/lib/album';
+import { getSessionUser } from '@/lib/session/getSession';
 
 // 获取我的所有图集
 export async function GET() {
     try {
-        const cookieStore = await cookies();
-        const authCookie = cookieStore.get('auth');
-
-        if (!authCookie || authCookie.value !== 'true') {
-            return NextResponse.json({ error: '未登录' }, { status: 401 });
-        }
-
-        const userId = cookieStore.get('userId')?.value;
-
-        if (!userId) {
-            return NextResponse.json({ error: '用户ID未找到' }, { status: 401 });
-        }
+        const session = await getSessionUser();
 
         // 获取用户的图集列表
-        const albums = await getAlbumsByOwnerId(parseInt(userId));
+        const albums = await getAlbumsByOwnerId(session.id);
 
         // 返回图集列表
         return NextResponse.json(albums);
-    } catch (error) {
+    } catch (error: any) {
+        if (error.message === 'UNAUTHORIZED') {
+            return NextResponse.json({
+              error: {
+                message: '未登录',
+                code: 'UNAUTHORIZED'
+              }
+            }, { status: 401 })
+        }
         return NextResponse.json({
             error: {
                 message: '获取图集列表失败',
