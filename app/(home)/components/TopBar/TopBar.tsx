@@ -1,0 +1,118 @@
+'use client'
+
+import { AppBar, Toolbar, IconButton, Tabs, Tab, Box } from '@mui/material'
+import Link from 'next/link'
+import Image from 'next/image'
+import MenuIcon from '@mui/icons-material/Menu'
+import HomeIcon from '@mui/icons-material/Home'
+import PersonIcon from '@mui/icons-material/Person'
+import { useRouter, usePathname } from 'next/navigation'
+
+
+interface TopBarTab {
+    label: string
+    value: string
+    icon: React.ReactElement
+}
+// 顶部导航栏组件的属性接口
+interface TopBarProps {
+    tabs: TopBarTab[]
+    onLeftMenuItemClick: () => void
+}
+
+export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) {
+    const router = useRouter()
+    const pathname = usePathname()
+
+    const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
+        router.push(newValue)
+    }
+
+    const getTabValue = () => {
+        return tabs.find(t => pathname.startsWith(t.value))?.value || tabs[0].value
+    }
+
+    return (
+        <AppBar 
+            position="fixed" 
+            sx={{ 
+                zIndex: (theme) => theme.zIndex.drawer + 1,
+                boxShadow: 'none',
+            }}
+        >
+            <Toolbar>
+                {/* 左侧菜单按钮 */}
+                <IconButton
+                    aria-label="open drawer"
+                    onClick={onMenuClick}
+                    edge="start"
+                    sx={{ mr: 2 }}
+                >
+                    <MenuIcon />
+                </IconButton>
+
+                {/* Logo 区域 */}
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Link href="/index/pictures" passHref>
+                        <Image
+                            src="/logo.png"
+                            alt="AenSanctum Logo"
+                            width={60}
+                            height={30}
+                            style={{ objectFit: 'contain', cursor: 'pointer' }}
+                        />
+                    </Link>
+                </Box>
+
+                {/* 导航标签页 */}
+                <Box sx={{ ml: 4 }}>
+                    <Tabs 
+                        value={getTabValue()} 
+                        onChange={handleTabChange}
+                        sx={{
+                            minHeight: 'auto',
+                            '& .MuiTab-root': {
+                                minHeight: 'auto',
+                                padding: '8px 16px',
+                                '&.Mui-selected': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 选中状态背景
+                                    borderRadius: '4px',
+                                },
+                            },
+                            '& .MuiTabs-indicator': {
+                                display: 'none',  // 隐藏底部指示器
+                            },
+                        }}
+                    >
+                        {/* 标签页 */}
+                        {tabs.map((t, index) => (
+                            <Tab
+                                key={index}
+                                value={t.value}
+                                label={t.label}
+                                icon={t.icon || <HomeIcon />}
+                                iconPosition="start"
+                            />
+                        ))}
+                    </Tabs>
+                </Box>
+
+                {/* 右侧弹性空间 */}
+                <Box sx={{ flexGrow: 1 }} />
+                
+                {/* 个人中心按钮 */}
+                <IconButton
+                    component={Link}
+                    href="/me"
+                    sx={{ 
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 悬停效果
+                        },
+                    }}
+                >
+                    <PersonIcon />
+                </IconButton>
+            </Toolbar>
+        </AppBar>
+    )
+}
