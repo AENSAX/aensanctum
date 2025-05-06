@@ -39,5 +39,6 @@ next-env.d.ts
 .idea/
 .vscode/
 
-# 问题总结文档
+
 /docs/issue-summary.md
+/public/
