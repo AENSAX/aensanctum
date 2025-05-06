@@ -5,10 +5,10 @@ import { cookies } from 'next/headers'
 // 更新我的图片
 export async function PUT(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
+        const { id } = await params
         const cookieStore = await cookies();
         const auth = cookieStore.get('auth')?.value;
         if (!auth) {
@@ -29,7 +29,7 @@ export async function PUT(
             }, { status: 401 });
         }
 
-        const pictureId = parseInt(params.id);
+        const pictureId = parseInt(id);
         const body = await request.json();
         const { title, tags, isPrivate } = body;
 
@@ -83,10 +83,10 @@ export async function PUT(
 // 删除我的图片
 export async function DELETE(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
+        const { id } = await params
         const cookieStore = await cookies();
         const auth = cookieStore.get('auth')?.value;
         if (!auth) {
@@ -107,7 +107,7 @@ export async function DELETE(
             }, { status: 401 });
         }
 
-        const pictureId = parseInt(params.id);
+        const pictureId = parseInt(id);
 
         if (!pictureId) {
             return NextResponse.json({

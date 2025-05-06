@@ -5,10 +5,10 @@ import { cookies } from "next/headers";
 // 获取图片详情
 export async function GET(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params
+        const { id } = await params
         const cookieStore = await cookies();
         const auth = cookieStore.get('auth')?.value
         if (!auth) {
@@ -28,7 +28,7 @@ export async function GET(
               }
             }, { status: 401 })
         }
-        const picture = await getPictureById(parseInt(params.id))
+        const picture = await getPictureById(parseInt(id))
         if (!picture) {
             return NextResponse.json({
               error: {

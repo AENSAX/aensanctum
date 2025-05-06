@@ -5,10 +5,10 @@ import { getAlbumById } from '@/lib/album'
 // 获取某个图集
 export async function GET(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params
+        const { id } = await params
         const cookieStore = await cookies()
         const cookie = cookieStore.get('auth')?.value
         if (!cookie) {
@@ -28,7 +28,7 @@ export async function GET(
               }
             }, { status: 401 })
         }
-        const album = await getAlbumById(parseInt(params.id))
+        const album = await getAlbumById(parseInt(id))
         if (!album) {
             return NextResponse.json({
               error: {

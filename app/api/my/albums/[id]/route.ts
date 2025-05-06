@@ -6,10 +6,10 @@ import prisma from '@/lib/db';
 //删除我的图集
 export async function DELETE(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
+        const { id } = await params;
         const cookieStore = await cookies();
         const authCookie = cookieStore.get('auth');
 
@@ -33,7 +33,7 @@ export async function DELETE(
             }, { status: 401 });
         }
 
-        const albumId = parseInt(params.id);
+        const albumId = parseInt(id);
 
         if (!albumId) {
             return NextResponse.json({
@@ -79,10 +79,10 @@ export async function DELETE(
 // 更新我的图集
 export async function PUT(
     request: Request,
-    context: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const params = await context.params;
+        const { id } = await params;
         const cookieStore = await cookies();
         const authCookie = cookieStore.get('auth');
 
@@ -107,7 +107,7 @@ export async function PUT(
         }
 
         const { name, tags, addPictures, removePictures, isPrivate } = await request.json();
-        const albumId = parseInt(params.id);
+        const albumId = parseInt(id);
 
         if (!albumId) {
             return NextResponse.json({
