@@ -1,5 +1,5 @@
 ## 数据库配置信息
-
+sudo -u postgres psql -c "CREATE USER aensanctum WITH PASSWORD 'aensanctum';" && sudo -u postgres psql -c "CREATE DATABASE aensanctum OWNER aensanctum;"
 ### PostgreSQL 配置
 - 数据库名称：aensanctum
 - 数据库用户：aensanctum
