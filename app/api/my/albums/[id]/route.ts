@@ -42,7 +42,7 @@ export async function DELETE(
         }
         await deleteAlbum(albumId);
 
-        return NextResponse.json({ success: true, message: '图集删除成功' }, { status: 200 });
+        return NextResponse.json({ success: true, message: '图集删除成功' });
     } catch (error: any) {
         if (error.message === 'UNAUTHORIZED') {
             return NextResponse.json({
@@ -70,6 +70,7 @@ export async function PUT(
         const { id } = await params;
         const session = await getSessionUser();
 
+        // TODO zod validation
         const { name, tags, addPictures, removePictures, isPrivate } = await request.json();
         const albumId = parseInt(id);
 

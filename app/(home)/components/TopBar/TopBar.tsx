@@ -33,9 +33,9 @@ export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBa
     }
 
     return (
-        <AppBar 
-            position="fixed" 
-            sx={{ 
+        <AppBar
+            position="fixed"
+            sx={{
                 zIndex: (theme) => theme.zIndex.drawer + 1,
                 boxShadow: 'none',
             }}
@@ -66,18 +66,22 @@ export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBa
 
                 {/* 导航标签页 */}
                 <Box sx={{ ml: 4 }}>
-                    <Tabs 
-                        value={getTabValue()} 
+                    <Tabs
+                        value={getTabValue()}
                         onChange={handleTabChange}
                         sx={{
                             minHeight: 'auto',
                             '& .MuiTab-root': {
                                 minHeight: 'auto',
                                 padding: '8px 16px',
+                                transition: theme => theme.transitions.create('background-color'),
                                 '&.Mui-selected': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 选中状态背景
-                                    borderRadius: '4px',
+                                    backgroundColor: 'rgba(255, 255, 255, 0.4)',  // 选中状态背景
+                                    color: 'text.primary'
                                 },
+                                ':hover': {
+                                    backgroundColor: 'rgba(255, 255, 255, 0.6)'
+                                }
                             },
                             '& .MuiTabs-indicator': {
                                 display: 'none',  // 隐藏底部指示器
@@ -92,6 +96,11 @@ export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBa
                                 label={t.label}
                                 icon={t.icon || <HomeIcon />}
                                 iconPosition="start"
+                                sx={{
+                                    color: 'text.primary',
+                                    mx: 1,
+                                    borderRadius: '4px',
+                                }}
                             />
                         ))}
                     </Tabs>
@@ -99,12 +108,12 @@ export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBa
 
                 {/* 右侧弹性空间 */}
                 <Box sx={{ flexGrow: 1 }} />
-                
+
                 {/* 个人中心按钮 */}
                 <IconButton
                     component={Link}
                     href="/me"
-                    sx={{ 
+                    sx={{
                         '&:hover': {
                             backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 悬停效果
                         },

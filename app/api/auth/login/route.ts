@@ -29,16 +29,10 @@ export async function POST(request: Request) {
     session.name = user.name;
     await session.save();
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: '登录成功'
-      }),
-      {
-        status: 200,
-        headers: res.headers
-      }
-    );
+    return Response.json({
+      success: true,
+      message: '登录成功'
+    });
   } catch (error) {
     return NextResponse.json({
       error: { message: '服务器错误', code: 'SERVER_ERROR' }
@@ -50,19 +44,18 @@ export async function GET() {
   try {
 
     const session = await getSessionUser();
-    
+
     if (!session.id) {
       return NextResponse.json({
         error: { message: '未登录', code: 'UNAUTHORIZED' }
       }, { status: 401 });
     }
 
-    return new Response(
-      JSON.stringify({
-        id: session.id,
-        email: session.email,
-        name: session.name,
-      }),
+    return Response.json({
+      id: session.id,
+      email: session.email,
+      name: session.name,
+    },
       {
         status: 200,
       }

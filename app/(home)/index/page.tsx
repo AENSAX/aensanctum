@@ -25,10 +25,8 @@ export default function WelcomePage() {
     >
       <Container maxWidth="sm">
         <Box
+          className="flex flex-col items-center"
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
             gap: 4,
           }}
         >

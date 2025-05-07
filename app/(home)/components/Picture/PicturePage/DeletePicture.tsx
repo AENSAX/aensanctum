@@ -19,11 +19,8 @@ export default function DeletePicture({ isOpen, onClose, picture, onSuccess }: D
     const handleDelete = async () => {
         try {
             setIsDeleting(true)
-            const response = await fetch(`/api/my/pictures/${picture.id}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
+            const response = await fetch(`/api/my/picturess/${picture.id}`, {
+                method: 'DELETE'
             })
 
             if (!response.ok) {

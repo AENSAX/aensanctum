@@ -15,7 +15,7 @@ import { useUser, useAlbum } from '@/lib/fetcher/fetchers'
 
 
 export default function AlbumPage({ albumId }: { albumId: number }) {
-    const { album, error: albumError, isLoading: albumLoading } = useAlbum(albumId)
+    const { data: album, error: albumError, isLoading: albumLoading } = useAlbum(albumId)
     const { user, error: userError, isLoading: userLoading } = useUser()
 
     const canEdit = user?.id === album?.owner.id
@@ -27,7 +27,7 @@ export default function AlbumPage({ albumId }: { albumId: number }) {
     const router = useRouter()
     if (albumLoading || userLoading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
                 <CircularProgress />
             </Box>
         )
@@ -55,10 +55,7 @@ export default function AlbumPage({ albumId }: { albumId: number }) {
             }
             setIsDeleting(true)
             const response = await fetch(`/api/my/albums/${albumId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                method: 'DELETE'
             })
 
             if (!response.ok) {
@@ -94,6 +91,9 @@ export default function AlbumPage({ albumId }: { albumId: number }) {
     const handleEditAlbumPictures = async (picturesToAdd: AlbumPicture[], picturesToRemove: AlbumPicture[]) => {
         const response = await fetch(`/api/my/albums/${albumId}`, {
             method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({ addPictures: picturesToAdd, removePictures: picturesToRemove })
         })
         if (!response.ok) {

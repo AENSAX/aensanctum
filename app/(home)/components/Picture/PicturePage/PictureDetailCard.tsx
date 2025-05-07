@@ -22,12 +22,7 @@ interface PictureDetailCardProps {
 }
 
 const fetcher = async (url: string) => {
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
+    const response = await fetch(url)
     return response.json()
 }
 
@@ -39,7 +34,7 @@ export default function PictureDetailCard({ picture, onEdit, onDelete }: Picture
     const canEdit = user?.id === picture.owner.id
 
     return (
-        <Container maxWidth="xl" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Container maxWidth="xl" className="flex items-center justify-center">
             <Paper
                 elevation={3}
                 sx={{
@@ -54,8 +49,8 @@ export default function PictureDetailCard({ picture, onEdit, onDelete }: Picture
                     width={800}
                     height={600}
                     style={{
-                        maxWidth: '80vw',
-                        maxHeight: '80vh',
+                        maxWidth: '65%',
+                        maxHeight: '65vh',
                         height: 'auto',
                         width: 'auto',
                         display: 'block',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { TextField, Button, Alert, Box } from '@mui/material';
 
@@ -9,8 +9,7 @@ export default function RegisterForm() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = useCallback(async (name: string, email: string, password: string) => {
         setError('');
 
         try {
@@ -39,10 +38,13 @@ export default function RegisterForm() {
         catch (err) {
             setError('服务器错误，请稍后重试');
         }
-    };
+    }, []);
 
     return (
-        <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+        <Box component="form" onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit(name, email, password);
+        }} sx={{ width: '100%' }}>
             <TextField
                 margin="normal"
                 required
