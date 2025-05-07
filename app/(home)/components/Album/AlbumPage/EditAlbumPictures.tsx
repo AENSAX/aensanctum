@@ -18,7 +18,7 @@ interface EditAlbumPicturesProps {
 
 export default function EditAlbumPictures({isOpen, albumId, onClose, onSubmit}: EditAlbumPicturesProps) {
     const { user, error: userError, isLoading: userLoading } = useUser()
-    const { album, error: albumError, isLoading: albumLoading } = useAlbum(albumId)
+    const { data: album, error: albumError, isLoading: albumLoading } = useAlbum(albumId)
     const { pictures, error: picturesError, isLoading: picturesLoading } = useMyPictures()
     const [selectedPictures, setSelectedPictures] = useState<AlbumPicture[]>([])
 
@@ -65,7 +65,7 @@ export default function EditAlbumPictures({isOpen, albumId, onClose, onSubmit}: 
     }
     if (picturesLoading) {
         return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
+            <Dialog open={isOpen} maxWidth="lg" fullWidth onClose={handleClose}>
                 <DialogContent>
                     <Typography align="center" sx={{ py: 4 }}>加载中...</Typography>
                 </DialogContent>
@@ -74,7 +74,7 @@ export default function EditAlbumPictures({isOpen, albumId, onClose, onSubmit}: 
     }
     if (picturesError || !pictures) {
         return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
+            <Dialog open={isOpen} maxWidth="lg" fullWidth onClose={handleClose}>
                 <DialogContent>
                     <Typography align="center" color="error" sx={{ py: 4 }}>加载失败</Typography>
                 </DialogContent>
@@ -84,7 +84,7 @@ export default function EditAlbumPictures({isOpen, albumId, onClose, onSubmit}: 
 
     if (!pictures || pictures.length === 0) {
         return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
+            <Dialog open={isOpen} maxWidth="lg" fullWidth onClose={handleClose}>
                 <DialogContent>
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                         <Typography>你还没有上传任何图片</Typography>

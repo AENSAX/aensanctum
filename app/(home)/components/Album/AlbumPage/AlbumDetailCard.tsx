@@ -110,41 +110,26 @@ export default function AlbumDetailCard({
                                 variant="contained"
                                 startIcon={<AddPhotoAlternateIcon />}
                                 onClick={onAddPictures}
-                                sx={{ 
-                                    bgcolor: 'primary.main',
-                                    '&:hover': {
-                                        bgcolor: 'primary.dark'
-                                    }
-                                }}
+                                color='primary'
                             >
                                 添加图片
                             </Button>
-                            <IconButton
+                            <Button
+                                variant="contained"
+                                startIcon={<EditIcon />}
                                 onClick={onEdit}
-                                color="primary"
-                                sx={{ 
-                                    bgcolor: 'primary.light',
-                                    '&:hover': {
-                                        bgcolor: 'primary.main',
-                                        color: 'white'
-                                    }
-                                }}
+                                color='secondary'
                             >
-                                <EditIcon />
-                            </IconButton>
-                            <IconButton
+                                编辑
+                            </Button>
+                            <Button
+                                variant="contained"
+                                startIcon={<DeleteIcon />}
                                 onClick={onDelete}
-                                color="error"
-                                sx={{ 
-                                    bgcolor: 'error.light',
-                                    '&:hover': {
-                                        bgcolor: 'error.main',
-                                        color: 'white'
-                                    }
-                                }}
+                                color='error'
                             >
-                                <DeleteIcon />
-                            </IconButton>
+                                删除
+                            </Button>
                         </>
                     )}
                 </Box>
