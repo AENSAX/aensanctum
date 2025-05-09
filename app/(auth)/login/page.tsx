@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import LoginForm from './components/LoginForm';
+import { LoginForm } from '@/app/_components/auth';
 import { Container, Paper, Typography, Box } from '@mui/material';
 
 export default function LoginPage() {

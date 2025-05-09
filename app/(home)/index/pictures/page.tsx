@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, CircularProgress, Typography } from '@mui/material'
-import PicturesGrid from '@/app/(home)/components/Picture/PictureGrid/PicturesGrid'
+import { PicturesGrid } from '@/app/_components/picture'
 import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Picture } from '@/lib/interfaces/interfaces'

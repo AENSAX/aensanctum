@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import RegisterForm from './components/RegisterForm';
+import { SignUpForm } from '@/app/_components/auth';
 import { Container, Paper, Typography, Box } from '@mui/material';
 
 export default function RegisterPage() {
@@ -35,7 +35,7 @@ export default function RegisterPage() {
                                 登录已有账户
                             </Link>
                         </Typography>
-                        <RegisterForm />
+                        <SignUpForm />
                     </Paper>
                 </Box>
             </Container>

@@ -1,14 +1,76 @@
 'use client'
 
-import { AppBar, Toolbar, IconButton, Tabs, Tab, Box } from '@mui/material'
+import { Drawer, List, ListItem, ListItemButton, ListItemIcon, Box } from '@mui/material'
 import Link from 'next/link'
+import { useRouter, usePathname } from 'next/navigation'
 import Image from 'next/image'
-import MenuIcon from '@mui/icons-material/Menu'
 import HomeIcon from '@mui/icons-material/Home'
 import PersonIcon from '@mui/icons-material/Person'
-import { useRouter, usePathname } from 'next/navigation'
+import MenuIcon from '@mui/icons-material/Menu'
+import { AppBar, Toolbar, IconButton, Tabs, Tab } from '@mui/material'
 
+// 侧边栏宽度
+const drawerWidth = 64
 
+// 定义按钮项接口
+interface LeftBarItem {
+    icon: React.ReactElement
+    onClick?: () => void
+    href?: string
+}
+
+interface LeftBarProps {
+    isOpen: boolean
+    items: LeftBarItem[]
+}
+
+export function LeftBar({ isOpen, items }: LeftBarProps) {
+
+    return (
+        <Drawer
+            sx={{
+                width: drawerWidth,
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                    width: drawerWidth,
+                    boxSizing: 'border-box',
+                },
+            }}
+            variant="persistent"
+            anchor="left"
+            open={isOpen}
+        >
+            <Box sx={{ overflow: 'auto', mt: 8 }}>
+                <List>
+                    {items.map((item, index) => (
+                        <ListItem key={index} disablePadding>
+                            <ListItemButton 
+                                component={item.href ? Link : 'div'}
+                                href={item.href}
+                                onClick={item.onClick}
+                                sx={{
+                                    justifyContent: 'center',
+                                    px: 2.5,
+                                }}
+                            >
+                                <ListItemIcon 
+                                    sx={{ 
+                                        minWidth: 'auto',
+                                        justifyContent: 'center'
+                                    }}
+                                >
+                                    {item.icon}
+                                </ListItemIcon>
+                            </ListItemButton>
+                        </ListItem>
+                    ))}
+                </List>
+            </Box>
+        </Drawer>
+    )
+}
+
+//顶部导航栏标签
 interface TopBarTab {
     label: string
     value: string
@@ -20,7 +82,7 @@ interface TopBarProps {
     onLeftMenuItemClick: () => void
 }
 
-export default function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) {
+export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) {
     const router = useRouter()
     const pathname = usePathname()
 

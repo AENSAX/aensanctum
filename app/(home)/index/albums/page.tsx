@@ -3,7 +3,7 @@
 import { Box, Typography, CircularProgress } from '@mui/material'
 import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
-import AlbumsGrid from '@/app/(home)/components/Album/AlbumGrid/AlbumsGrid'
+import { AlbumsGrid } from '@/app/_components/album'
 import { Album } from '@/lib/interfaces/interfaces'
 
 const fetcher = async (url: string) => {

@@ -1,32 +1,16 @@
 'use client'
 
 import { Typography, Box, Container, Tabs, Tab, CircularProgress } from '@mui/material'
-import PicturesGrid from '@/app/(home)/components/Picture/PictureGrid/PicturesGrid'
-import AlbumsGrid from '@/app/(home)/components/Album/AlbumGrid/AlbumsGrid'
+import { PicturesGrid } from '@/app/_components/picture'
+import { AlbumsGrid } from '@/app/_components/album'
 import useSWR from 'swr'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Picture, Album } from '@/lib/interfaces/interfaces'
-import UserInfoCard from './components/UserInfoCard'
-
-interface User {
-  id: string
-  name: string
-  email: string
-}
-
-const fetcher = async (url: string) => {
-    const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
-    if (!res.ok) {
-        throw new Error('获取数据失败')
-    }
-    return res.json()
-}
+import { UserInfoCard } from '@/app/_components/user'
+import { useUser } from '@/lib/fetcher/fetchers'
+import { usePictures } from '@/lib/fetcher/fetchers'
+import { useAlbums } from '@/lib/fetcher/fetchers'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -56,9 +40,9 @@ function TabPanel(props: TabPanelProps) {
 
 export default function MePage() {
   const router = useRouter()
-  const { data: userInfo, isLoading: userLoading } = useSWR<User>('/api/auth/login', fetcher)
-  const { data: pictures, error: picturesError, isLoading: picturesLoading } = useSWR<Picture[]>('/api/my/pictures', fetcher)
-  const { data: albums, error: albumsError, isLoading: albumsLoading } = useSWR<Album[]>('/api/my/albums', fetcher)
+  const { user, isLoading: userLoading } = useUser()
+  const { pictures, error: picturesError, isLoading: picturesLoading } = usePictures()
+  const { albums, error: albumsError, isLoading: albumsLoading } = useAlbums()
   const [tabValue, setTabValue] = useState(0)
 
   if (userLoading) {
@@ -67,6 +51,9 @@ export default function MePage() {
         <CircularProgress />
       </Box>
     )
+  }
+  if (!user) {
+    return <Typography align="center">请先登录</Typography>
   }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -83,7 +70,7 @@ export default function MePage() {
 
   return (
     <Container maxWidth="xl">
-      <UserInfoCard userInfo={userInfo} />
+      <UserInfoCard userInfo={user} />
       <Box sx={{ width: '100%' }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs
