@@ -1,20 +1,14 @@
-import { getIronSession } from 'iron-session';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
-import { sessionOptions } from '@/lib/session/sessionOptions';
-
-
-async function getIronSessionData() {
-  const cookieStore = await cookies();
-  const session = await getIronSession<SessionUser>(cookieStore, sessionOptions);
-  return session;
-}
+import { getSessionUser } from '@/lib/session/getSession';
 
 export async function middleware(request: NextRequest) {
 
-  const session = await getIronSessionData();
-  const isAuth = session.id;
+  const session = await getSessionUser();
+  let isAuth = false;
+  if (session) {
+    isAuth = true;
+  }
 
   const isLogin = request.nextUrl.pathname.startsWith('/login');
   const isMePage = request.nextUrl.pathname.startsWith('/me');

@@ -1,44 +1,37 @@
 'use client';
 
-import Link from 'next/link';
 import { SignUpForm } from '@/app/_components/auth';
-import { Container, Paper, Typography, Box } from '@mui/material';
+import { Container, Paper, Typography, Box, Link } from '@mui/material';
+import NextLink from 'next/link';
 
-export default function RegisterPage() {
+export default function SignUpPage() {
     return (
-        <>
-            <Container component="main" maxWidth="xs">
-                <Box
-                    sx={{
-                        marginTop: 8,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            padding: 4,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            width: '100%',
-                        }}
-                    >
-                        <Typography component="h1" variant="h5" sx={{ mb: 2 }}>
-                            创建新账户
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                            或{' '}
-                            <Link href="/login" style={{ color: '#1976d2', textDecoration: 'none' }}>
-                                登录已有账户
-                            </Link>
-                        </Typography>
-                        <SignUpForm />
-                    </Paper>
-                </Box>
-            </Container>
-        </>
+        <Container component="main" maxWidth="xs">
+            <Box
+                sx={{
+                    mt: 8,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}>
+                <Paper elevation={3} sx={{
+                    padding: 4,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                }}>
+                    <Typography component='h1' variant='h5' sx={{ mb: 2 }}>
+                        创建新账户
+                    </Typography>
+                    <SignUpForm />
+                    <Typography>
+                        或{' '}
+                        <Link href="/login" component={NextLink} color="secondary">
+                            登录
+                        </Link>
+                    </Typography>
+                </Paper>
+            </Box>
+        </Container>
     )
 }

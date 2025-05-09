@@ -8,81 +8,32 @@ import {
   Container,
   Paper,
   Alert,
+  Link,
 } from '@mui/material'
 import Image from 'next/image'
-
+import NextLink from 'next/link'
 export default function WelcomePage() {
   const router = useRouter()
 
   return (
-    <Box
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Container maxWidth="sm">
-        <Box
-          className="flex flex-col items-center"
-          sx={{
-            gap: 4,
-          }}
-        >
-          <Box
-            sx={{
-              width: 120,
-              height: 120,
-              position: 'relative',
-              mb: 2,
-            }}
-          >
-            <Image
-              src="/logo.png"
-              alt="AenSanctum Logo"
-              fill
-              style={{ objectFit: 'contain' }}
-              priority
-            />
-          </Box>
-          <Paper
-            elevation={3}
-            sx={{
-              p: 4,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
-            <Typography variant="h4" component="h1" gutterBottom>
-              AenSanctum
-            </Typography>
-            <Typography variant="body1" color="text.secondary" align="center">
-              是一个包含成人内容的图片分享平台
-            </Typography>
-            <Alert 
-              severity="warning" 
-              sx={{ 
-                width: '100%',
-                mt: 2,
-              }}
-            >
-              本网站包含成人内容，请确保您已年满18岁。
-            </Alert>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              size="large"
-              onClick={() => router.push('/index/pictures')}
-              sx={{ mt: 2 }}
-            >
-              进入网站
-            </Button>
-          </Paper>
-        </Box>
-      </Container>
-    </Box>
+    <Container component='main' maxWidth='xs'>
+      <Box
+        sx={{ mt: 8 }}>
+        <Paper elevation={3} sx={{
+          padding: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}>
+          <Image src='/logo.png' alt='logo' width={100} height={100} />
+          <Alert severity="warning">
+            包含成人内容，必须满18周岁访问
+          </Alert>
+          <Link href='/index/pictures' component={NextLink} sx={{ mt: 2 }} color='secondary'>
+            我已知晓，进入
+          </Link>
+        </Paper>
+      </Box>
+    </Container>
   )
 }

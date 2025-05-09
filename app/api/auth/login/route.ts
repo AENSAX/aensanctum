@@ -28,10 +28,11 @@ export async function POST(request: Request) {
     session.email = user.email;
     session.name = user.name;
     await session.save();
-
     return Response.json({
       success: true,
-      message: '登录成功'
+      message: '登录成功',
+    }, {
+      headers: res.headers,
     });
   } catch (error) {
     return NextResponse.json({
@@ -45,7 +46,7 @@ export async function GET() {
 
     const session = await getSessionUser();
 
-    if (!session.id) {
+    if (!session) {
       return NextResponse.json({
         error: { message: '未登录', code: 'UNAUTHORIZED' }
       }, { status: 401 });
