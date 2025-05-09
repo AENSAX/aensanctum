@@ -6,7 +6,7 @@ A modern image sharing platform built with Next.js.
 
 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/aensanctum.git
+git clone https://github.com/AENSAX/aensanctum.git
 cd aensanctum
 ```
 
