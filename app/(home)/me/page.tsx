@@ -90,19 +90,21 @@ export default function MePage() {
           </Tabs>
         </Box>
         <TabPanel value={tabValue} index={0}>
-          {picturesLoading ? (
+          {picturesLoading && (
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
               <CircularProgress />
-            </Box>
-          ) : picturesError ? (
+            </Box>)}
+          {picturesError && (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <Typography color="error">{picturesError.message}</Typography>
             </Box>
-          ) : pictures?.length === 0 ? (
+          )}
+          {pictures?.length === 0 && (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <Typography>你还没有上传任何图片。</Typography>
             </Box>
-          ) : (
+          )}
+          {pictures?.length && (
             <PicturesGrid pictures={pictures || []} onImageClick={handleImageClick}/>
           )}
         </TabPanel>

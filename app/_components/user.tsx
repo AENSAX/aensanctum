@@ -12,17 +12,10 @@ export function UserInfoCard({ userInfo }: {userInfo: User}) {
   const handleLogout = async () => {
     try {
       const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: 'POST'
       })
 
       if (response.ok) {
-        document.cookie.split(';').forEach(c => {
-          document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date(0).toUTCString()};path=/`)
-        })
-        
         router.push('/login')
       } else {
         throw new Error('登出失败')

@@ -1,12 +1,7 @@
 import { User, Album, Picture } from "../interfaces/interfaces";
 import useSWR from 'swr';
 export const fetcher = async (url: string): Promise<any> => {
-    const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
+    const res = await fetch(url)
     return res.json()
 }
 export const useUser = () => {
@@ -25,7 +20,7 @@ export const useMyAlbums = () => {
 }
 
 export const useAlbum = (id: number) => {
-    const { data: album, error, isLoading } = useSWR<Album>(`/api/albums/${id}`, fetcher)
+    const { data: album, error, isLoading } = useSWR<Album>(`/api/albums/${id}`, fetcher);
     return { album, error, isLoading }
 }
 

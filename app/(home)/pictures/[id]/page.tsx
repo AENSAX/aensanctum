@@ -1,12 +1,10 @@
 'use client'
 import { Typography, Box, CircularProgress } from "@mui/material"
-import useSWR from 'swr'
 import { redirect } from "next/navigation"
 import { useState } from 'react'
 import { EditPicture } from '@/app/_components/picture'
 import { PictureDetailCard } from '@/app/_components/picture'
 import { DeletePicture } from '@/app/_components/picture'
-import { Picture } from '@/lib/interfaces/interfaces'
 import { useParams } from 'next/navigation'
 import { useUser } from '@/lib/fetcher/fetchers'
 import { usePicture } from '@/lib/fetcher/fetchers'

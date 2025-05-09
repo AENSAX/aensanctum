@@ -90,6 +90,7 @@ export async function GET() {
   try {
     const session = await getSessionUser()
     
+    // TODO export prisma
     const pictures = await getAllPictures()
     const filteredPictures = pictures.filter(picture => {
       const isOwner = picture.owner.id === session.id

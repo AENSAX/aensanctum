@@ -7,12 +7,7 @@ import { AlbumsGrid } from '@/app/_components/album'
 import { Album } from '@/lib/interfaces/interfaces'
 
 const fetcher = async (url: string) => {
-    const res = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    })
+    const res = await fetch(url)
     if (!res.ok) {
         throw new Error('获取图集列表失败')
     }
@@ -21,7 +16,7 @@ const fetcher = async (url: string) => {
 
 export default function AlbumsPage() {
     const router = useRouter()
-    const { data: albums, error: albumsError, isLoading: albumsLoading } = useSWR<Album[]>('/api/albums', fetcher)
+    const { data: albums, error: albumsError, isLoading: albumsLoading, mutate } = useSWR<Album[]>('/api/albums', fetcher)
     const { data: user, error: authError, isLoading: userLoading } = useSWR('/api/auth/login', fetcher)
 
     if (albumsLoading || userLoading) {

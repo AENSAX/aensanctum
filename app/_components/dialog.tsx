@@ -86,7 +86,8 @@ interface FormDialogProps {
     onClose: () => void
     isOpen: boolean
     fields: Field[]
-    onSubmit: (data: any) => void
+    onSubmit: (data: any) => Promise<void>,
+    onComplete?: () => void,
     externalError?: string // 外部错误(例如api响应：上传失败)
     children?: React.ReactNode
 }
@@ -97,6 +98,7 @@ export function FormDialog({
     isOpen,
     fields,
     onSubmit,
+    onComplete,
     externalError,
     children,
 }: FormDialogProps) {
@@ -112,6 +114,7 @@ export function FormDialog({
             [field.name]: ''
         }), {})
     })
+    const [disabled, setDisabled] = useState(false);
 
     // 监听 fields 的变化，更新 formData
     useEffect(() => {
@@ -145,10 +148,10 @@ export function FormDialog({
         })
         return true
     }
-    
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, type } = e.target
-        
+
         switch (type) {
             case 'file': {
                 const file = e.target.files?.[0]
@@ -172,30 +175,33 @@ export function FormDialog({
         }
     }
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const canSubmit = fields.map(checkValidation).filter(bool => !bool).length === 0
         if (!canSubmit) return
-        onSubmit(formData)
+        setDisabled(true);
+        await onSubmit(formData)
+        setDisabled(false);
         if (externalError) return
+        onComplete?.();
         onClose()
     }
     const handleClose = () => {
+        onClose()
         setFormData({})
         setErrors({})
-        onClose()
     }
-    
+
     return (
-        <Dialog 
-            open={isOpen} 
+        <Dialog
+            open={isOpen}
             onClose={handleClose}
             maxWidth="sm"
             fullWidth
         >
             <form onSubmit={handleSubmit}>
                 <DialogTitle>{title}</DialogTitle>
-                
+
                 <DialogContent>
                     <Stack spacing={3} sx={{ mt: 2 }}>
                         {fields.map((field) => {
@@ -205,6 +211,7 @@ export function FormDialog({
                                         <div key={field.name}>
                                             <input
                                                 type="file"
+                                                readOnly={disabled}
                                                 name={field.name}
                                                 onChange={handleChange}
                                                 required={field.required}
@@ -214,6 +221,7 @@ export function FormDialog({
                                             />
                                             <label htmlFor={`file-${field.name}`}>
                                                 <Button
+                                                    disabled={disabled}
                                                     variant="outlined"
                                                     component="span"
                                                     fullWidth
@@ -236,6 +244,7 @@ export function FormDialog({
                                             name={field.name}
                                             label={field.label}
                                             value={formData[field.name] || ''}
+                                            disabled={disabled}
                                             onChange={handleChange}
                                             placeholder={field.placeholder}
                                             required={field.required}
@@ -253,12 +262,14 @@ export function FormDialog({
                 </DialogContent>
 
                 <DialogActions>
-                    <Button 
+                    <Button
+                        disabled={disabled}
                         onClick={handleClose}
                     >
                         取消
                     </Button>
-                    <Button 
+                    <Button
+                        disabled={disabled}
                         type="submit"
                         variant="contained"
                     >

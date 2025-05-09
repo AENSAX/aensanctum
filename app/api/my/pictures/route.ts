@@ -21,7 +21,6 @@ export async function GET() {
               }
             }, { status: 401 })
         }
-        console.error('Get picture list by owner id failed', error)
         return NextResponse.json({
           error: {
             message: '获取我的图片列表失败',

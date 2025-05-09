@@ -12,10 +12,10 @@ export async function PUT(
         const session = await getSessionUser()
 
         const pictureId = parseInt(id);
-        const body = await request.json();
+        const body = await request.json();    // TODO validation
         const { title, tags, isPrivate } = body;
 
-        if (!pictureId) {
+        if (!id) {
             return NextResponse.json({
               error: {
                 message: '图片ID未找到',
@@ -81,7 +81,7 @@ export async function DELETE(
 
         const pictureId = parseInt(id);
 
-        if (!pictureId) {
+        if (!id) {
             return NextResponse.json({
               error: {
                 message: '图片ID未找到',
@@ -116,7 +116,7 @@ export async function DELETE(
             }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true, message: '图片删除成功' }, { status: 200 });
+        return NextResponse.json({ success: true, message: '图片删除成功' });
     } catch (error: any) {
         if (error.message === 'UNAUTHORIZED') {
             return NextResponse.json({
