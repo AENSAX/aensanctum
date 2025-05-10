@@ -1,52 +1,66 @@
 import { NextResponse } from 'next/server'
 import { getAlbumById } from '@/lib/album'
 import { getSessionUser } from '@/lib/session/getSession'
+import prisma from '@/lib/db'
+import { z } from 'zod'
 
+const rqschema = z.object({
+  id: z.string().transform(str => parseInt(str)),
+})
 // 获取某个图集
 export async function GET(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const { id } = await params
-        const session = await getSessionUser()
-        
-        const album = await getAlbumById(parseInt(id))
-        if (!album) {
-            return NextResponse.json({
-              error: {
-                message: '图集不存在',
-                code: 'ALBUM_NOT_FOUND'
-              }
-            }, { status: 404 })
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }) {
+  const result = rqschema.safeParse(await params)
+  if (!result.success) {
+    return NextResponse.json({ status: 400 })
+  }
+  const id = result.data.id
+  const session = await getSessionUser()
+  if (!session) {
+    return NextResponse.json({ status: 401 })
+  }
+  const album = await prisma.album.findUnique({
+    where: { id },
+    select: {
+      owner: {
+        select: {
+          id: true,
+          name: true,
         }
-        const isOwner = album.owner.id === session.id
-        if (album.isPrivate && !isOwner) {
-            return NextResponse.json({
-              error: {
-                message: '图集是私有的',
-                code: 'ALBUM_PRIVATE'
-              }
-            }, { status: 403 })
-        }
-        if (!isOwner) {
-            album.albumPictures = album.albumPictures.filter(p => !p.isPrivate)
-        }
-        return NextResponse.json(album)
-    } catch (error: any) {
-        if (error.message === 'UNAUTHORIZED') {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 })
-        }
-        return NextResponse.json({
-          error: {
-            message: '获取图集失败',
-            code: 'ALBUM_GET_ERROR'
+      },
+      isPrivate: true,
+      albumPictures: {
+        select: {
+          order: true,
+          picture: {
+            select: {
+              id: true,
+              title: true,
+              tags: true,
+              url: true,
+              isPrivate: true,
+            }
           }
-        }, { status: 500 })
+        }
+      }
     }
+  }
+  )
+  if (!album) {
+    return NextResponse.json({ status: 404 })
+  }
+  const isOwner = album.owner.id === session.id
+  if (album.isPrivate && !isOwner) {
+    return NextResponse.json({ status: 403 })
+  }
+  const albumResponse = {
+    owner: album.owner,
+    isPrivate: album.isPrivate,
+    albumPictures: album.albumPictures.map(ap => ({
+      order: ap.order,
+      ...ap.picture
+    }))
+  }
+  return NextResponse.json(albumResponse)
 }

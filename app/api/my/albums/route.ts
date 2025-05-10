@@ -6,6 +6,9 @@ import { getSessionUser } from '@/lib/session/getSession';
 export async function GET() {
     try {
         const session = await getSessionUser();
+        if (!session) {
+            return NextResponse.json({ status: 401 })
+        }
 
         // 获取用户的图集列表
         const albums = await getAlbumsByOwnerId(session.id);
