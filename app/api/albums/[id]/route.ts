@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { getAlbumById } from '@/lib/album'
 import { getSessionUser } from '@/lib/session/getSession'
 import prisma from '@/lib/db'
 import { z } from 'zod'
