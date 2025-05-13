@@ -320,11 +320,9 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
             return
         }
 
-        const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0)
         const maxSize = 50 * 1024 * 1024 // 50MB
-
-        if (totalSize > maxSize) {
-            setUploadError([{ field: 'images', message: '所选图片总大小不能超过50MB' }])
+        if (Array.from(files).some(file => file.size > maxSize)) {
+            setUploadError([{ field: 'images', message: '单张图片大小不能超过50MB' }])
             setPictureList([])
             return
         }
