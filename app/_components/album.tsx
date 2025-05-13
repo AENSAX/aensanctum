@@ -2,7 +2,7 @@
 import { Box, Typography, Button, IconButton, FormControlLabel, Switch, Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress, Alert } from '@mui/material'
 import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
-import { zhCN } from 'date-fns/locale'
+import { de, zhCN } from 'date-fns/locale'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import EditIcon from '@mui/icons-material/Edit'
 import LockIcon from '@mui/icons-material/Lock'
@@ -525,6 +525,7 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
           type: 'text',
           required: true,
           placeholder: '请输入图集名称',
+          defaultValue: album.name,
           validation: {
             pattern: /^[a-zA-Z0-9\u4e00-\u9fa5\- ]{1,100}$/,
             error: '图集名称只能包含中英文、数字、空格和横杠，长度在1-100个字符之间'
@@ -534,6 +535,7 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
         {
           name: 'tags',
           label: '图集标签',
+          defaultValue: album.tags.join(' '),
           type: 'text',
           required: true,
           placeholder: '请输入图集标签，用空格分隔（1-10个标签，每个标签1-20字符）',
