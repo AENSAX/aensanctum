@@ -1,69 +1,85 @@
 import { NextResponse } from 'next/server';
-import { findUserByEmail } from '@/lib/user';
 import { sessionOptions } from '@/lib/session/sessionOptions';
 import { getIronSession } from 'iron-session';
 import { getSessionUser } from '@/lib/session/getSession';
+import prisma from '@/lib/db';
+import { z } from 'zod';
+import bcrypt from 'bcrypt';
+import { is } from 'date-fns/locale';
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { email, password } = body;
+  const schema = z.object({
+    email: z.string().email('邮箱格式不正确'),
+    password: z.string().min(8, '密码不能少于8个字符').max(20, '密码不能超过20个字符'),
+  });
 
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return NextResponse.json({
-        error: { message: '用户不存在', code: 'USER_NOT_FOUND' }
-      }, { status: 401 });
-    }
-    if (user.password !== password) {
-      return NextResponse.json({
-        error: { message: '密码错误', code: 'PASSWORD_ERROR' }
-      }, { status: 401 });
-    }
-
-    const res = new Response();
-    const session = await getIronSession<SessionUser>(request, res, sessionOptions);
-
-    session.id = user.id;
-    session.email = user.email;
-    session.name = user.name;
-    await session.save();
-    return Response.json({
-      success: true,
-      message: '登录成功',
-    }, {
-      headers: res.headers,
-    });
-  } catch (error) {
+  const result = schema.safeParse(await request.json());
+  if (!result.success) {
     return NextResponse.json({
-      error: { message: '服务器错误', code: 'SERVER_ERROR' }
-    }, { status: 500 });
+      errors: result.error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message
+      }))
+    }, { status: 400 });
   }
+  const { email, password } = result.data;
+  const user = await prisma.user.findUnique({
+    where: { email }
+  });
+  if (!user) {
+    return NextResponse.json({
+      errors: [{
+        field: 'email',
+        message: '用户不存在'
+      }]
+    }, { status: 401 });
+  }
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (isPasswordValid === null) {
+    return NextResponse.json({
+      errors: [{
+        field: 'password',
+        message: '密码错误'
+      }]
+    }, { status: 401 });
+  }
+  if (!isPasswordValid) {
+    return NextResponse.json({
+      errors: [{
+        field: 'password',
+        message: '密码错误'
+      }]
+    }, { status: 401 });
+  }
+
+  const res = new Response();
+  const session = await getIronSession<SessionUser>(request, res, sessionOptions);
+
+  session.id = user.id;
+  session.email = user.email;
+  session.name = user.name;
+  await session.save();
+  return new Response(
+    JSON.stringify({
+      success: true,
+      message: '登录成功'
+    }),
+    {
+      status: 200,
+      headers: res.headers,
+    }
+  );
 }
 
 export async function GET() {
-  try {
+  const session = await getSessionUser();
 
-    const session = await getSessionUser();
-
-    if (!session) {
-      return NextResponse.json({
-        error: { message: '未登录', code: 'UNAUTHORIZED' }
-      }, { status: 401 });
-    }
-
-    return Response.json({
-      id: session.id,
-      email: session.email,
-      name: session.name,
-    },
-      {
-        status: 200,
-      }
-    );
-  } catch (error) {
-    return NextResponse.json({
-      error: { message: '服务器错误', code: 'SERVER_ERROR' }
-    }, { status: 500 });
+  if (!session) {
+    return NextResponse.json({ status: 401 });
   }
+  return NextResponse.json({
+    id: session.id,
+    email: session.email,
+    name: session.name,
+  }, { status: 200 });
 } 

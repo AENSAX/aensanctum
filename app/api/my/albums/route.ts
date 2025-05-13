@@ -1,34 +1,29 @@
 import { NextResponse } from 'next/server';
-import { getAlbumsByOwnerId } from '@/lib/album';
 import { getSessionUser } from '@/lib/session/getSession';
+import prisma from '@/lib/db';
 
-// 获取我的所有图集
+// 获取用户所有图集
 export async function GET() {
-    try {
-        const session = await getSessionUser();
-        if (!session) {
-            return NextResponse.json({ status: 401 })
-        }
-
-        // 获取用户的图集列表
-        const albums = await getAlbumsByOwnerId(session.id);
-
-        // 返回图集列表
-        return NextResponse.json(albums);
-    } catch (error: any) {
-        if (error.message === 'UNAUTHORIZED') {
-            return NextResponse.json({
-              error: {
-                message: '未登录',
-                code: 'UNAUTHORIZED'
-              }
-            }, { status: 401 })
-        }
-        return NextResponse.json({
-            error: {
-                message: '获取图集列表失败',
-                code: 'ALBUM_LIST_ERROR'
-            }
-        }, { status: 500 });
+    const session = await getSessionUser();
+    if (!session) {
+        return NextResponse.json({ status: 401 })
     }
+    const albums = await prisma.album.findMany({
+        where: {
+            ownerId: session.id
+        },
+        select: {
+            id: true,
+            isPrivate: true,
+            ownerId: true,
+            pictures: {
+                take: 1,
+                select: {
+                    url: true
+                }
+            }
+        }
+    });
+
+    return NextResponse.json(albums);
 }

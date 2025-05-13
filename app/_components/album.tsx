@@ -1,5 +1,5 @@
 'use client'
-import { Box, Typography, Button, IconButton, FormControlLabel, Switch, Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material'
+import { Box, Typography, Button, IconButton, FormControlLabel, Switch, Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress, Alert } from '@mui/material'
 import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
@@ -7,33 +7,68 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import EditIcon from '@mui/icons-material/Edit'
 import LockIcon from '@mui/icons-material/Lock'
 import DeleteIcon from '@mui/icons-material/Delete'
-import { useTheme } from '@mui/material/styles'
-import { Album, AlbumPicture, Picture } from '@/lib/interfaces/interfaces'
-import { tagsFormater, useAlbum, useMyPictures, useUser } from '@/lib/fetcher/fetchers'
-import { useEffect, useState } from 'react'
+import { AlbumDetail, Album } from '@/lib/interfaces/interfaces'
+import { tagsFormater, useUser } from '@/lib/fetcher/fetchers'
+import { useState, useRef } from 'react'
 import { mutate } from 'swr'
-import { ConfirmDialog,FormDialog } from './dialog'
-import { PicturesGrid } from './picture'
-import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import { ConfirmDialog, FormDialog } from './dialog'
+import { useAlbum } from '@/lib/fetcher/fetchers'
+import Link from 'next/link'
 
 //图集信息卡片
 interface AlbumDetailCardProps {
-    album: Album
+    albumId: string
     onAddPictures: () => void
     onEdit: () => void
     onDelete: () => void
 }
 
 export function AlbumDetailCard({
-    album,
+    albumId,
     onAddPictures,
     onEdit,
     onDelete
 }: AlbumDetailCardProps) {
-    const theme = useTheme()
-    const { user } = useUser()
+    const { user, userErrors, userLoading } = useUser()
+    const { album, albumErrors, albumLoading } = useAlbum(albumId)
+    if (albumLoading || userLoading) {
+        return (
+            <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: '200px'
+            }}>
+                <CircularProgress />
+            </Box>
+        )
+    }
+    if (userErrors && userErrors.length > 0) {
+        return (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+                {userErrors.map((error: { field: string, message: string }) => (
+                    <Typography key={error.field} color="error">{error.message}</Typography>
+                ))}
+            </Box>
+        )
+    }
+    if (albumErrors && albumErrors.length > 0) {
+        return (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+                {albumErrors.map((error: { field: string, message: string }) => (
+                    <Typography key={error.field} color="error">{error.message}</Typography>
+                ))}
+            </Box>
+        )
+    }
+    if (!user) {
+        return <Typography align="center">请先登录</Typography>
+    }
+    if (!album) {
+        return <Typography align="center">图集不存在</Typography>
+    }
 
-    const canEdit = user?.id == album?.owner.id
+    const canEdit = user.id == album.ownerId
 
     return (
         <Box sx={{
@@ -51,10 +86,10 @@ export function AlbumDetailCard({
                 overflow: 'hidden',
                 flexShrink: 0
             }}>
-                {album.albumPictures.length > 0 ? (
+                {album.pictures.length > 0 ? (
                     <Image
-                        src={album.albumPictures[0].url}
-                        alt={album.albumPictures[0].title}
+                        src={album.pictures[0].url}
+                        alt={`${album.id}`}
                         fill
                         style={{ objectFit: 'cover' }}
                     />
@@ -83,7 +118,7 @@ export function AlbumDetailCard({
                         width: 40,
                         height: 40,
                         borderRadius: '50%',
-                        backgroundColor: theme.palette.primary.main,
+                        bgcolor: 'primary.main',
                         display: 'flex',
                         justifyContent: 'center',
                         alignItems: 'center',
@@ -100,7 +135,7 @@ export function AlbumDetailCard({
                 </Box>
 
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                    {album.albumPictures.length} 张图片
+                    {album.pictures.length} 张图片
                 </Typography>
 
                 {album?.tags?.length > 0 && (
@@ -117,6 +152,8 @@ export function AlbumDetailCard({
                                 startIcon={<AddPhotoAlternateIcon />}
                                 onClick={onAddPictures}
                                 sx={{
+                                    minWidth: 120,
+                                    height: 45,
                                     bgcolor: 'primary.main',
                                     '&:hover': {
                                         bgcolor: 'primary.dark'
@@ -125,32 +162,40 @@ export function AlbumDetailCard({
                             >
                                 添加图片
                             </Button>
-                            <IconButton
+                            <Button
+                                variant="contained"
+                                startIcon={<EditIcon />}
                                 onClick={onEdit}
-                                color="primary"
                                 sx={{
-                                    bgcolor: 'primary.light',
+                                    minWidth: 120,
+                                    height: 45,
+                                    bgcolor: 'primary.main',
                                     '&:hover': {
-                                        bgcolor: 'primary.main',
-                                        color: 'white'
+                                        bgcolor: 'primary.dark'
                                     }
                                 }}
                             >
-                                <EditIcon />
-                            </IconButton>
-                            <IconButton
-                                onClick={onDelete}
+                                编辑信息
+                            </Button>
+                            <Button
+                                variant="outlined"
                                 color="error"
+                                startIcon={<DeleteIcon />}
+                                onClick={onDelete}
                                 sx={{
-                                    bgcolor: 'error.light',
+                                    minWidth: 120,
+                                    height: 45,
+                                    borderColor: 'error.main',
+                                    color: 'error.main',
                                     '&:hover': {
-                                        bgcolor: 'error.main',
-                                        color: 'white'
+                                        bgcolor: 'error.light',
+                                        borderColor: 'error.dark',
+                                        color: 'error.dark'
                                     }
                                 }}
                             >
-                                <DeleteIcon />
-                            </IconButton>
+                                删除图集
+                            </Button>
                         </>
                     )}
                 </Box>
@@ -159,23 +204,8 @@ export function AlbumDetailCard({
     )
 }
 
-
-
 //图集显示网格
-export function AlbumsGrid({ albums, onAlbumClick }: { albums: Album[], onAlbumClick?: (album: Album) => void }) {
-
-    if (!albums || albums.length === 0) {
-        return (
-            <Typography align="center">暂无图集</Typography>
-        )
-    }
-
-    const handleAlbumClick = (album: Album) => {
-        if (onAlbumClick) {
-            onAlbumClick(album)
-        }
-    }
-
+export function AlbumsGrid({ albums }: { albums: Album[] }) {
     return (
         <Box
             sx={{
@@ -197,7 +227,6 @@ export function AlbumsGrid({ albums, onAlbumClick }: { albums: Album[], onAlbumC
             {albums.map((album) => (
                 <Box
                     key={album.id}
-                    onClick={() => handleAlbumClick(album)}
                     sx={{
                         cursor: 'pointer',
                         position: 'relative',
@@ -208,95 +237,232 @@ export function AlbumsGrid({ albums, onAlbumClick }: { albums: Album[], onAlbumC
                         }
                     }}
                 >
-                    {album.albumPictures.length > 0 ? (
-                        <>
-                            <Image
-                                src={album.albumPictures[0].url}
-                                alt={album.albumPictures[0].title}
-                                width={500}
-                                height={500}
-                                style={{
-                                    width: '100%',
-                                    height: 'auto',
-                                    display: 'block',
-                                    borderRadius: '12px',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                    transition: 'all 0.2s ease',
-                                }}
-                            />
-                            {/* 如果图集是私有的，则显示锁 */}
-                            {album.isPrivate && (
-                                <Box
-                                    sx={{
-                                        position: 'absolute',
-                                        top: 8,
-                                        right: 8,
-                                        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                        borderRadius: '50%',
-                                        padding: '4px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
+                    <Link href={`/albums/${album.id}`}>
+                        {album.pictures.length > 0 ? (
+                            <>
+                                <Image
+                                    src={album.pictures[0].url}
+                                    alt={`${album.id}`}
+                                    width={500}
+                                    height={500}
+                                    style={{
+                                        width: '100%',
+                                        height: 'auto',
+                                        display: 'block',
+                                        borderRadius: '12px',
+                                        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                        transition: 'all 0.2s ease'
                                     }}
-                                >
-                                    <LockIcon sx={{ color: 'white', fontSize: 16 }} />
-                                </Box>
-                            )}
+                                />
+                                {album.isPrivate && (
+                                    <Box
+                                        sx={{
+                                            position: 'absolute',
+                                            top: 8,
+                                            right: 8,
+                                            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                                            borderRadius: '50%',
+                                            padding: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}
+                                    >
+                                        <LockIcon sx={{ color: 'white', fontSize: 16 }} />
+                                    </Box>
+                                )}
+                            </>
+                        ) : (
                             <Box
                                 sx={{
-                                    position: 'absolute',
-                                    left: 8,
-                                    bottom: 8,
-                                    bgcolor: 'rgba(0, 0, 0, 0.6)',
-                                    color: 'white',
-                                    px: 1.5,
-                                    py: 0.5,
-                                    borderRadius: '4px',
-                                    fontSize: '0.875rem',
-                                    maxWidth: 'calc(100% - 90px)',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
+                                    width: '100%',
+                                    aspectRatio: '1',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    bgcolor: 'grey.200',
+                                    borderRadius: '12px',
+                                    color: 'text.secondary'
                                 }}
                             >
-                                {album.name}
+                                暂无封面
                             </Box>
-                            <Box
-                                sx={{
-                                    position: 'absolute',
-                                    right: 8,
-                                    bottom: 8,
-                                    bgcolor: 'rgba(0, 0, 0, 0.6)',
-                                    color: 'white',
-                                    px: 1.5,
-                                    py: 0.5,
-                                    borderRadius: '4px',
-                                    fontSize: '0.625rem',
-                                }}
-                            >
-                                {album.albumPictures.length} 张图片
-                            </Box>
-                        </>
-                    ) : (
-                        <Box
-                            sx={{
-                                width: '100%',
-                                aspectRatio: '1',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                bgcolor: 'grey.200',
-                                borderRadius: '12px',
-                                color: 'text.secondary'
-                            }}
-                        >
-                            暂无图片
-                        </Box>
-                    )}
+                        )}
+                    </Link>
                 </Box>
             ))}
         </Box>
+    )
+}
+
+//编辑图集图片
+interface EditAlbumPicturesProps {
+    isOpen: boolean
+    onClose: () => void
+    albumId: string
+}
+
+export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicturesProps) {
+    const [isUploading, setIsUploading] = useState(false)
+    const [uploadError, setUploadError] = useState<{ field: string, message: string }[]>([])
+    const [pictureList, setPictureList] = useState<File[]>([])
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // 处理文件选择
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+
+        if (files.length > 10) {
+            setUploadError([{ field: 'images', message: '一次最多只能上传10张图片' }])
+            return
+        }
+        setPictureList(Array.from(files))
+        setUploadError([])
+    }
+
+    const handleUpload = async () => {
+        if (pictureList.length === 0) return
+        setIsUploading(true)
+        const formData = new FormData()
+        pictureList.forEach((file) => {
+            formData.append('images', file)
+        })
+        const response = await fetch(`/api/my/albums/${albumId}`, {
+            method: 'POST',
+            body: formData,
+        })
+        if (!response.ok) {
+            const result = await response.json()
+            setUploadError(result.errors)
+        }
+        setIsUploading(false)
+        mutate(`/api/albums/${albumId}`)
+        setPictureList([])
+        onClose()
+    }
+
+    return (
+        <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>添加图片</DialogTitle>
+            <DialogContent>
+                <Box sx={{ 
+                    mt: 2, 
+                    mb: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2
+                }}>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileSelect}
+                        style={{ display: 'none' }}
+                        ref={fileInputRef}
+                    />
+                    
+                    <Box sx={{
+                        display: 'flex',
+                        gap: 2,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap'
+                    }}>
+                        <Button
+                            variant="contained"
+                            component="label"
+                            disabled={isUploading}
+                            startIcon={<AddPhotoAlternateIcon />}
+                            onClick={() => fileInputRef.current?.click()}
+                            sx={{ 
+                                minWidth: 120,
+                                height: 45,
+                                bgcolor: 'primary.main',
+                                '&:hover': {
+                                    bgcolor: 'primary.dark'
+                                }
+                            }}
+                        >
+                            选择图片
+                        </Button>
+                        <Button
+                            variant="contained"
+                            onClick={handleUpload}
+                            disabled={isUploading || pictureList.length === 0}
+                            sx={{ 
+                                minWidth: 120,
+                                height: 45,
+                                bgcolor: 'primary.main',
+                                '&:hover': {
+                                    bgcolor: 'primary.dark'
+                                }
+                            }}
+                        >
+                            {isUploading ? '上传中...' : '上传'}
+                        </Button>
+                    </Box>
+
+                    {pictureList.length > 0 && (
+                        <Box sx={{
+                            mt: 2,
+                            p: 2,
+                            borderRadius: 1,
+                            bgcolor: 'grey.50',
+                            maxHeight: '200px',
+                            overflowY: 'auto'
+                        }}>
+                            <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary' }}>
+                                已选择 {pictureList.length} 张图片
+                            </Typography>
+                            {pictureList.map((file) => (
+                                <Typography 
+                                    key={file.name} 
+                                    variant="body2"
+                                    sx={{
+                                        py: 0.5,
+                                        px: 1,
+                                        borderRadius: 0.5,
+                                        '&:hover': {
+                                            bgcolor: 'grey.100'
+                                        }
+                                    }}
+                                >
+                                    {file.name}
+                                </Typography>
+                            ))}
+                        </Box>
+                    )}
+
+                    {uploadError && uploadError.map((error) => (
+                        <Alert 
+                            key={error.field} 
+                            severity="error"
+                            sx={{
+                                '& .MuiAlert-message': {
+                                    width: '100%'
+                                }
+                            }}
+                        >
+                            {error.message}
+                        </Alert>
+                    ))}
+                </Box>
+            </DialogContent>
+            <DialogActions>
+                <Button 
+                    onClick={onClose} 
+                    variant="outlined"
+                    sx={{ 
+                        minWidth: 120,
+                        height: 45
+                    }}
+                >
+                    取消
+                </Button>
+            </DialogActions>
+        </Dialog>
     )
 }
 
@@ -304,25 +470,14 @@ export function AlbumsGrid({ albums, onAlbumClick }: { albums: Album[], onAlbumC
 interface EditAlbumProps {
     isOpen: boolean
     onClose: () => void
-    album: {
-        id: number
-        name: string
-        tags: string[]
-        isPrivate: boolean
-    }
+    album: AlbumDetail
     onSuccess?: () => void
 }
+
 export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumProps) {
-    const [isPrivate, setIsPrivate] = useState(false)
+    const [isPrivate, setIsPrivate] = useState(album.isPrivate)
     const [showPrivacyConfirm, setShowPrivacyConfirm] = useState(false)
-
-    // 初始化表单
-    useEffect(() => {
-        if (album) {
-            setIsPrivate(album.isPrivate)
-        }
-    }, [album, isOpen])
-
+    const [responseError, setResponseError] = useState<{ field: string, message: string }[]>([])
 
     // 处理隐私设置变更
     const handlePrivacyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -340,59 +495,55 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
     }
 
     // 处理提交
-    const [responseError, setResponseError] = useState<string>('')
     const handleSubmit = async (data: any) => {
-        if (!album) return
-        try {
-            const response = await fetch(`/api/my/albums/${album.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: data.name,
-                    tags: tagsFormater(data.tags),
-                    isPrivate,
-                }),
-            })
-            if (!response.ok) {
-                setResponseError('编辑失败')
-            }
-            if (onSuccess) {
-                mutate(`/api/albums/${album.id}`)
-                onSuccess()
-            }
-            onClose()
-        } catch (error) {
-            throw error
+        const response = await fetch(`/api/my/albums/${album.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: data.name,
+                tags: tagsFormater(data.tags),
+                isPrivate,
+            }),
+        })
+        if (!response.ok) {
+            const result = await response.json()
+            setResponseError(result.errors)
         }
+        if (onSuccess) {
+            mutate(`/api/albums/${album.id}`)
+            onSuccess()
+        }
+        onClose()
     }
 
     const albumFields = [
         {
-            name: 'name',
-            label: '图集名称',
-            type: 'text',
-            required: true,
-            defaultValue: album?.name || '',
-            validation: {
-                pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-                error: '图集名称只能包含中英文、数字、非连续空格和横杠'
-            }
+          name: 'name',
+          label: '图集名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入图集名称',
+          validation: {
+            pattern: /^[a-zA-Z0-9\u4e00-\u9fa5\- ]{1,100}$/,
+            error: '图集名称只能包含中英文、数字、空格和横杠，长度在1-100个字符之间'
+          },
+          maxLength: 100
         },
         {
-            name: 'tags',
-            label: '标签',
-            type: 'text',
-            required: true,
-            defaultValue: album?.tags.join(' '),
-            placeholder: '请输入图片标签,用空格分隔',
-            validation: {
-                pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-                error: '标签只能包含中英文、数字、非连续空格和横杠'
-            }
+          name: 'tags',
+          label: '图集标签',
+          type: 'text',
+          required: true,
+          placeholder: '请输入图集标签，用空格分隔（1-10个标签，每个标签1-20字符）',
+          validation: {
+            pattern: /^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
+            error: '标签只能包含中英文、数字、空格和横杠'
+          },
+          helperText: '输入1-10个标签，每个标签长度在1-20个字符之间'
         }
-    ]
+      ]
 
     return (
         <>
@@ -425,218 +576,5 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
                 secondaryButton={{ text: '取消', onClick: () => setShowPrivacyConfirm(false) }}
             />
         </>
-    )
-}
-
-//编辑图集图片
-interface EditAlbumPicturesProps {
-    isOpen: boolean
-    albumId: number
-    onClose: () => void
-    onSubmit: (picturesToAdd: AlbumPicture[], picturesToRemove: AlbumPicture[]) => void
-}
-
-export function EditAlbumPictures({isOpen, albumId, onClose, onSubmit}: EditAlbumPicturesProps) {
-    const { user, error: userError, isLoading: userLoading } = useUser()
-    const { album, error: albumError, isLoading: albumLoading } = useAlbum(albumId)
-    const { pictures, error: picturesError, isLoading: picturesLoading } = useMyPictures()
-    const [selectedPictures, setSelectedPictures] = useState<AlbumPicture[]>([])
-
-    const canEdit = user?.id == album?.owner.id
-
-    useEffect(() => {
-        if (album?.albumPictures && selectedPictures.length === 0) {
-            setSelectedPictures(album.albumPictures)
-        }
-    }, [album?.albumPictures])
-
-    const originalPictures = album?.albumPictures || []
-
-    // 处理关闭操作的函数 - 重置为初始状态
-    const handleClose = () => {
-        setSelectedPictures([])
-        onClose()
-    }
-
-    // 处理图片点击事件的函数（选择/取消选择）
-    const handlePictureClick = (picture: Picture) => {
-        setSelectedPictures(prev => {
-            const isSelected = prev.some(p => p.id === picture.id)
-            if (isSelected) {
-                return prev.filter(p => p.id !== picture.id)
-                    .map((p, index) => ({ ...p, order: index }))
-            } else {
-                return [...prev, { ...picture, order: prev.length }]
-            }
-        })
-    }
-
-    const handleSubmit = () => {
-        if (!canEdit) return
-        // 找出需要添加的图片：新选择的图片中，id 不在原图片中，或者 id 相同但 order 不同的
-        const picturesToAdd = selectedPictures.filter(p => 
-            !originalPictures.some((op: AlbumPicture) => op.id === p.id && op.order === p.order)
-        )
-        // 找出需要删除的图片：原图片中，id 不在新选择的图片中，或者 id 相同但 order 不同的
-        const picturesToRemove = originalPictures.filter((op: AlbumPicture) => 
-            !selectedPictures.some(p => p.id === op.id && p.order === op.order)
-        )
-        onSubmit(picturesToAdd, picturesToRemove)
-    }
-    if (picturesLoading) {
-        return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
-                <DialogContent>
-                    <Typography align="center" sx={{ py: 4 }}>加载中...</Typography>
-                </DialogContent>
-            </Dialog>
-        )
-    }
-    if (picturesError || !pictures) {
-        return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
-                <DialogContent>
-                    <Typography align="center" color="error" sx={{ py: 4 }}>加载失败</Typography>
-                </DialogContent>
-            </Dialog>
-        )
-    }
-
-    if (!pictures || pictures.length === 0) {
-        return (
-            <Dialog open={isOpen} maxWidth="lg" fullWidth>
-                <DialogContent>
-                    <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography>你还没有上传任何图片</Typography>
-                    </Box>
-                </DialogContent>
-            </Dialog>
-        )
-    }
-
-    return (
-        <Dialog
-            open={isOpen}
-            onClose={handleClose}
-            maxWidth="lg"
-            fullWidth
-            PaperProps={{
-                sx: {
-                    minHeight: '80vh',
-                    maxHeight: '90vh'
-                }
-            }}
-        >
-            <DialogTitle>选择图片</DialogTitle>
-            <DialogContent>
-                <Box sx={{ mt: 2 }}>
-                    <PicturesGrid<Picture>
-                        pictures={pictures}
-                        onImageClick={handlePictureClick}
-                        customImageRender={(picture) => {
-                            const isSelected = selectedPictures.some(p => p.id === picture.id)
-                            const order = selectedPictures.find(p => p.id === picture.id)?.order
-                            return (
-                                <Box sx={{ position: 'relative' }}>
-                                    <Box
-                                        component="img"
-                                        src={picture.url}
-                                        alt={picture.title}
-                                        sx={{
-                                            width: '100%',
-                                            height: 'auto',
-                                            display: 'block',
-                                            borderRadius: '12px',
-                                            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                                            transition: 'all 0.2s ease',
-                                            '&:hover': {
-                                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
-                                            }
-                                        }}
-                                    />
-                                    {isSelected && (
-                                        <>
-                                            <Box
-                                                sx={{
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    bgcolor: 'rgba(25, 118, 210, 0.3)',
-                                                    borderRadius: '12px',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center'
-                                                }}
-                                            >
-                                                <CheckCircleIcon
-                                                    sx={{
-                                                        color: 'white',
-                                                        fontSize: 40,
-                                                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                                                    }}
-                                                />
-                                            </Box>
-                                            <Box
-                                                sx={{
-                                                    position: 'absolute',
-                                                    top: 8,
-                                                    left: 8,
-                                                    backgroundColor: 'rgba(25, 118, 210, 0.8)',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    width: 24,
-                                                    height: 24,
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontSize: '0.75rem',
-                                                    fontWeight: 'bold',
-                                                    cursor: 'pointer',
-                                                    '&:hover': {
-                                                        backgroundColor: 'rgba(25, 118, 210, 1)'
-                                                    }
-                                                }}
-                                            >
-                                                {order}
-                                            </Box>
-                                        </>
-                                    )}
-                                    {picture.isPrivate && (
-                                        <Box
-                                            sx={{
-                                                position: 'absolute',
-                                                top: 8,
-                                                right: 8,
-                                                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                                                borderRadius: '50%',
-                                                padding: '4px',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}
-                                        >
-                                            <LockIcon sx={{ color: 'white', fontSize: 16 }} />
-                                        </Box>
-                                    )}
-                                </Box>
-                            )
-                        }}
-                    />
-                </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleClose}>取消</Button>
-                <Button
-                    onClick={handleSubmit}
-                    variant="contained"
-                    color="primary"
-                >
-                    确认 ({selectedPictures.length})
-                </Button>
-            </DialogActions>
-        </Dialog>
     )
 }

@@ -115,7 +115,7 @@ export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) 
 
                 {/* Logo 区域 */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Link href="/index/pictures" passHref>
+                    <Link href="/index/albums" passHref>
                         <Image
                             src="/logo.png"
                             alt="AenSanctum Logo"

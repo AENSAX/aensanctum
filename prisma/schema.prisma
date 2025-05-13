@@ -13,41 +13,24 @@ model User {
   name      String
   password  String
   createdAt DateTime @default(now())
-  pictures  Picture[]
   albums    Album[]  // 用户创建的图集
 }
 
 model Picture {
   id        Int      @id @default(autoincrement())
-  title     String
-  tags      String[]
   url       String
-  owner     User     @relation(fields: [ownerId], references: [id])
-  ownerId   Int
-  albums    AlbumPicture[]  // 使用中间表
-  isPrivate Boolean  @default(false)  // 是否私密
-  createdAt DateTime @default(now())
+  album     Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  albumId   Int
 }
 
 model Album {
-  id        Int       @id @default(autoincrement())
-  name      String
-  tags      String[]
-  owner     User      @relation(fields: [ownerId], references: [id])
-  ownerId   Int
-  albumPictures  AlbumPicture[] // 使用中间表
-  isPrivate Boolean   @default(false)  // 是否私密
-  createdAt DateTime  @default(now())
-}
-
-// 中间表，存储图片在图集中的顺序
-model AlbumPicture {
-  id        Int     @id @default(autoincrement())
-  album     Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  albumId   Int
-  picture   Picture @relation(fields: [pictureId], references: [id], onDelete: Cascade)
-  pictureId Int
-  order     Int     @default(0) // 图片在图集中的顺序，越小越靠前
-
-  @@unique([albumId, pictureId]) // 确保同一张图片在图集中只出现一次
+  id          Int       @id @default(autoincrement())
+  name        String
+  description String    @default("没有简介")
+  tags        String[]
+  owner       User      @relation(fields: [ownerId], references: [id])
+  ownerId     Int
+  isPrivate   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  pictures    Picture[]
 }

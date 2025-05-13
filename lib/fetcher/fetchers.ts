@@ -1,43 +1,33 @@
-import { User, Album, Picture } from "../interfaces/interfaces";
+import { User, Album, AlbumDetail } from "../interfaces/interfaces";
 import useSWR from 'swr';
-export const fetcher = async (url: string): Promise<any> => {
+export const fetcher = async (url: string) => {
     const res = await fetch(url)
+    if (!res.ok) {
+        const result = await res.json()
+        throw new Error(result.errors)
+    }
     return res.json()
 }
 export const useUser = () => {
-    const { data: user, error, isLoading } = useSWR<User>('/api/auth/login', fetcher)
-    return { user, error, isLoading }
+    const { data: user, error: userErrors, isLoading: userLoading } = useSWR<User>('/api/auth/login', fetcher)
+    return { user, userErrors, userLoading }
 }
 
 export const useAlbums = () => {
-    const { data: albums, error, isLoading } = useSWR<Album[]>('/api/albums', fetcher)
-    return { albums, error, isLoading }
+    const { data: albums, error: albumsErrors, isLoading: albumsLoading } = useSWR<Album[]>('/api/albums', fetcher)
+    return { albums, albumsErrors, albumsLoading }
 }
 
 export const useMyAlbums = () => {
-    const { data: albums, error, isLoading } = useSWR<Album[]>(`/api/my/albums`, fetcher)
-    return { albums, error, isLoading }
+    const { data: albums, error: albumsErrors, isLoading: albumsLoading } = useSWR<Album[]>(`/api/my/albums`, fetcher)
+    return { albums, albumsErrors, albumsLoading }
 }
 
-export const useAlbum = (id: number) => {
-    const { data: album, error, isLoading } = useSWR<Album>(`/api/albums/${id}`, fetcher);
-    return { album, error, isLoading }
+export const useAlbum = (id: string) => {
+    const { data: album, error: albumErrors, isLoading: albumLoading } = useSWR<AlbumDetail>(`/api/albums/${id}`, fetcher);
+    return { album, albumErrors, albumLoading }
 }
 
-export const usePictures = () => {
-    const { data: pictures, error, isLoading } = useSWR<Picture[]>('/api/pictures', fetcher)
-    return { pictures, error, isLoading }
-}
-
-export const useMyPictures = () => {
-    const { data: pictures, error, isLoading } = useSWR<Picture[]>(`/api/my/pictures`, fetcher)
-    return { pictures, error, isLoading }
-}
-
-export const usePicture = (id: number) => {
-    const { data: picture, error, isLoading } = useSWR<Picture>(`/api/pictures/${id}`, fetcher)
-    return { picture, error, isLoading }
-}
 
 export const tagsFormater = (tags: string) => {
     return [...new Set(tags.split(' ').map((tag: string) => tag.trim()).filter(Boolean))]

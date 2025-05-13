@@ -1,65 +1,59 @@
 import { NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/session/getSession'
 import prisma from '@/lib/db'
-import { z } from 'zod'
 
-const rqschema = z.object({
-  id: z.string().transform(str => parseInt(str)),
-})
 // 获取某个图集
-export async function GET(
-  request: Request,
+export async function GET(request: Request,
   { params }: { params: Promise<{ id: string }> }) {
-  const result = rqschema.safeParse(await params)
-  if (!result.success) {
-    return NextResponse.json({ status: 400 })
-  }
-  const id = result.data.id
+  const { id } = await params
   const session = await getSessionUser()
   if (!session) {
-    return NextResponse.json({ status: 401 })
+    return NextResponse.json({
+      errors: [{
+        field: 'unauthorized',
+        message: '未授权'
+      }]
+    }, { status: 401 })
   }
   const album = await prisma.album.findUnique({
-    where: { id },
-    select: {
+    where: { id: parseInt(id) },
+    include: {
       owner: {
         select: {
           id: true,
           name: true,
         }
       },
-      isPrivate: true,
-      albumPictures: {
+      pictures: {
         select: {
-          order: true,
-          picture: {
-            select: {
-              id: true,
-              title: true,
-              tags: true,
-              url: true,
-              isPrivate: true,
-            }
-          }
+          id: true,
+          url: true,
+          albumId: true,
         }
       }
     }
   }
   )
   if (!album) {
-    return NextResponse.json({ status: 404 })
+    return NextResponse.json({
+      errors: [{
+        field: 'not_found',
+        message: '图集不存在'
+      }]
+    }, { status: 404 })
   }
-  const isOwner = album.owner.id === session.id
+  const isOwner = album.ownerId === session.id
   if (album.isPrivate && !isOwner) {
-    return NextResponse.json({ status: 403 })
+    return NextResponse.json({
+      errors: [{
+        field: 'forbidden',
+        message: '无权限访问'
+      }]
+    }, { status: 403 })
   }
   const albumResponse = {
-    owner: album.owner,
-    isPrivate: album.isPrivate,
-    albumPictures: album.albumPictures.map(ap => ({
-      order: ap.order,
-      ...ap.picture
-    }))
+    ...album,
+    createdAt: album.createdAt.toISOString(),
   }
   return NextResponse.json(albumResponse)
 }

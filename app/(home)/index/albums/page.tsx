@@ -1,25 +1,14 @@
 'use client'
 
 import { Box, Typography, CircularProgress } from '@mui/material'
-import { useRouter } from 'next/navigation'
-import useSWR from 'swr'
 import { AlbumsGrid } from '@/app/_components/album'
-import { Album } from '@/lib/interfaces/interfaces'
+import { useAlbums } from '@/lib/fetcher/fetchers'
 
-const fetcher = async (url: string) => {
-    const res = await fetch(url)
-    if (!res.ok) {
-        throw new Error('获取图集列表失败')
-    }
-    return res.json()
-}
 
 export default function AlbumsPage() {
-    const router = useRouter()
-    const { data: albums, error: albumsError, isLoading: albumsLoading, mutate } = useSWR<Album[]>('/api/albums', fetcher)
-    const { data: user, error: authError, isLoading: userLoading } = useSWR('/api/auth/login', fetcher)
+    const { albums, albumsErrors, albumsLoading } = useAlbums()
 
-    if (albumsLoading || userLoading) {
+    if (albumsLoading) {
         return (
             <Box sx={{
                 display: 'flex',
@@ -31,24 +20,23 @@ export default function AlbumsPage() {
             </Box>
         )
     }
-
-    if (albumsError) {
+    if (albumsErrors && albumsErrors.length > 0) {
         return (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-                <Typography color="error">{albumsError.message}</Typography>
+                {albumsErrors.map((error: { field: string, message: string }) => (
+                    <Typography key={error.field} color="error">{error.message}</Typography>
+                ))}
             </Box>
         )
     }
-
-    const handleAlbumClick = (album: Album) => {
-        router.push(`/albums/${album.id}`)
+    if (!albums || albums.length === 0) {
+        return <Typography align="center">暂无图集</Typography>
     }
 
     return (
         <Box sx={{ mt: 4 }}>
-            <AlbumsGrid 
-                albums={albums || []} 
-                onAlbumClick={handleAlbumClick}
+            <AlbumsGrid
+                albums={albums}
             />
         </Box>
     )

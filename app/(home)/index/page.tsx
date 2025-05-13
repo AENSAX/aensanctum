@@ -1,10 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
 import {
   Box,
-  Typography,
-  Button,
   Container,
   Paper,
   Alert,
@@ -13,7 +10,6 @@ import {
 import Image from 'next/image'
 import NextLink from 'next/link'
 export default function WelcomePage() {
-  const router = useRouter()
 
   return (
     <Container component='main' maxWidth='xs'>
@@ -29,7 +25,7 @@ export default function WelcomePage() {
           <Alert severity="warning">
             包含成人内容，必须满18周岁访问
           </Alert>
-          <Link href='/index/pictures' component={NextLink} sx={{ mt: 2 }} color='secondary'>
+          <Link href='/index/albums' component={NextLink} sx={{ mt: 2 }} color='secondary'>
             我已知晓，进入
           </Link>
         </Paper>

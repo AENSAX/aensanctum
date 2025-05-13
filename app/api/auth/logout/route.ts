@@ -1,20 +1,12 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers';
-import { sessionOptions } from '@/lib/session/sessionOptions';
-import { getIronSession } from 'iron-session';
+import { getSessionUser } from '@/lib/session/getSession';
 
 export async function POST() {
-  const cookieStore = await cookies();
-  const session = await getIronSession<SessionUser>(cookieStore, sessionOptions);
+  const session = await getSessionUser();
+  if (!session) {
+    return NextResponse.json({ status: 401 });
+  }
   session.destroy();
 
-  return NextResponse.json(
-    {
-      success: true,
-      message: '登出成功'
-    },
-    {
-      status: 200,
-    }
-  );
+  return NextResponse.json({ status: 200 });
 }

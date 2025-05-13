@@ -3,7 +3,6 @@
 import { styled } from '@mui/material/styles'
 import Box from '@mui/material/Box'
 import { useState } from 'react'
-import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import { FormDialog } from '@/app/_components/dialog'
 import HomeIcon from '@mui/icons-material/Home'
 import CollectionsIcon from '@mui/icons-material/Collections'
@@ -31,38 +30,6 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
     marginLeft: 0,
   }),
 }))
-
-const newPictureFields = [
-  {
-    name: 'picture',
-    label: '图片',
-    type: 'image',
-    required: true,
-    placeholder: '请选择图片'
-  },
-  {
-    name: 'title',
-    label: '图片名称',
-    type: 'text',
-    required: true,
-    placeholder: '请输入图片名称',
-    validation: {
-      pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-      error: '图片名称只能包含中英文、数字、非连续空格和横杠'
-    }
-  },
-  {
-    name: 'tags',
-    label: '图片标签',
-    type: 'text',
-    required: true,
-    placeholder: '请输入图片标签,用空格分隔',
-    validation: {
-      pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-      error: '标签只能包含中英文、数字、非连续空格和横杠'
-    }
-  }
-]
 const newAlbumFields = [
   {
     name: 'name',
@@ -71,37 +38,33 @@ const newAlbumFields = [
     required: true,
     placeholder: '请输入图集名称',
     validation: {
-      pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-      error: '图集名称只能包含中英文、数字、非连续空格和横杠'
-    }
+      pattern: /^[a-zA-Z0-9\u4e00-\u9fa5\- ]{1,100}$/,
+      error: '图集名称只能包含中英文、数字、空格和横杠，长度在1-100个字符之间'
+    },
+    maxLength: 100
   },
   {
     name: 'tags',
     label: '图集标签',
     type: 'text',
     required: true,
-    placeholder: '请输入图集标签,用空格分隔',
+    placeholder: '请输入图集标签，用空格分隔（1-10个标签，每个标签1-20字符）',
     validation: {
-      pattern: /^(?!.*\s{2,})[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-      error: '标签只能包含中英文、数字、非连续空格和横杠'
-    }
+      pattern: /^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
+      error: '标签只能包含中英文、数字、空格和横杠'
+    },
+    helperText: '输入1-10个标签，每个标签长度在1-20个字符之间'
   }
 ]
 
-  // 顶部导航栏标签配置
-  const topBarTabs = [
-    {
-      label: "图片",
-      value: "/index/pictures",
-      icon: <HomeIcon />
-    },
-    {
-      label: "图集",
-      value: "/index/albums",
-      icon: <CollectionsIcon />
-    }
-  ]
-
+// 顶部导航栏标签配置
+const topBarTabs = [
+  {
+    label: "图集",
+    value: "/index/albums",
+    icon: <CollectionsIcon />
+  }
+]
 
 // 导出默认的 HomeLayout 组件
 export default function HomeLayout({
@@ -110,18 +73,13 @@ export default function HomeLayout({
   children: React.ReactNode
 }) {
   const [leftBarOpen, setLeftBarOpen] = useState(false)
-  const [createPictureDialogOpen, setCreatePictureDialogOpen] = useState(false)
   const [createAlbumDialogOpen, setCreateAlbumDialogOpen] = useState(false)
 
   // 左侧导航栏配置
   const leftBarItems = [
     {
       icon: <HomeIcon />,
-      href: "/index/pictures"
-    },
-    {
-      icon: <CloudUploadIcon />,
-      onClick: () => setCreatePictureDialogOpen(true)
+      href: "/index/albums"
     },
     {
       icon: <CreateNewFolderIcon />,
@@ -129,33 +87,19 @@ export default function HomeLayout({
     }
   ]
 
-  const [pictureSubmitResponseError, setPictureSubmitResponseError] = useState<string>('')
-  const [albumSubmitResponseError, setAlbumSubmitResponseError] = useState<string>('')
-  async function handleNewPictureSubmit(data: any) {
-    const formData = new FormData()
-    formData.append('title', data.title)
-    formData.append('tags', tagsFormater(data.tags).join(','))
-    formData.append('image', data.picture)
-    const response = await fetch('/api/pictures', {
-      method: 'POST',
-      body: formData
-    })
-    if (!response.ok) {
-      setPictureSubmitResponseError('上传失败')
-    }
-    setCreatePictureDialogOpen(false)
-  }
+  const [albumSubmitResponseError, setAlbumSubmitResponseError] = useState<{ field: string, message: string }[]>([])
   async function handleNewAlbumSubmit(data: any) {
     const response = await fetch('/api/albums', {
       method: 'POST',
       body: JSON.stringify({
         name: data.name,
-        tags: tagsFormater(data.tags)
+        tags: tagsFormater(data.tags),
+        isPrivate: true
       })
     })
-
     if (!response.ok) {
-      setAlbumSubmitResponseError('上传失败')
+      const result = await response.json()
+      await setAlbumSubmitResponseError(result.errors)
     }
     else {
       setCreateAlbumDialogOpen(false)
@@ -182,17 +126,6 @@ export default function HomeLayout({
           {children}
         </Box>
       </Main>
-
-      {/* 上传图片对话框 */}
-      <FormDialog
-        title="上传图片"
-        onClose={() => setCreatePictureDialogOpen(false)}
-        isOpen={createPictureDialogOpen}
-        fields={newPictureFields}
-        onSubmit={handleNewPictureSubmit}
-        onComplete={() => mutate('/api/pictures')}
-        externalError={pictureSubmitResponseError}
-        />
 
       {/* 创建图集对话框 */}
       <FormDialog

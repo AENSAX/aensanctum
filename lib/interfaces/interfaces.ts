@@ -1,33 +1,32 @@
 export interface Album {
     id: number;
-    name: string;
+    ownerId: number;
     isPrivate: boolean;
-    createdAt: Date;
-    tags: string[];
-    albumPictures: AlbumPicture[];
+    pictures: Picture[];
+}
+export interface AlbumDetail {
+    createdAt: string;
     owner: {
-        id: number;
         name: string;
-        email: string;
+        id: number;
     };
+    pictures: {
+        albumId: number;
+        id: number;
+        url: string;
+    }[];
+    name: string;
+    id: number;
+    description: string;
+    tags: string[];
+    ownerId: number;
+    isPrivate: boolean;
 }
 
 export interface Picture {
+    albumId: number
     id: number
-    title: string
     url: string
-    tags: string[]
-    isPrivate: boolean
-    createdAt: Date
-    owner: {
-        id: number
-        name: string
-        email: string
-    }
-}
-
-export interface AlbumPicture extends Picture {
-    order: number
 }
 
 export interface User {

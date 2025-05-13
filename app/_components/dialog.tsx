@@ -1,12 +1,13 @@
 'use client'
 
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography } from '@mui/material'
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Alert } from '@mui/material'
 import { useState, useEffect } from 'react'
 
 //确认对话框
 interface ButtonProps {
     text: string
     onClick: () => void
+    disabled?: boolean
 }
 
 interface ConfirmProps {
@@ -16,6 +17,7 @@ interface ConfirmProps {
     content: string
     primaryButton?: ButtonProps
     secondaryButton?: ButtonProps
+    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
 }
 
 export function ConfirmDialog({
@@ -24,13 +26,26 @@ export function ConfirmDialog({
     title,
     content,
     primaryButton,
-    secondaryButton
+    secondaryButton,
+    externalError
 }: ConfirmProps) {
 
     if (!primaryButton && !secondaryButton) {
         throw new Error('At least one button must be provided')
     }
-
+    const [errors, setErrors] = useState<{ field: string, message: string }[]>([])
+    const handlePrimaryButtonClick = async () => {
+        await primaryButton?.onClick()
+        if (externalError) {
+            setErrors(externalError)
+        }
+    }
+    const handleSecondaryButtonClick = async () => {
+        await secondaryButton?.onClick()
+        if (externalError) {
+            setErrors(externalError)
+        }
+    }
     return (
         <Dialog
             open={isOpen}
@@ -47,8 +62,9 @@ export function ConfirmDialog({
             <DialogActions>
                 {secondaryButton && (
                     <Button
-                        onClick={secondaryButton.onClick}
+                        onClick={handleSecondaryButtonClick}
                         variant={'contained'}
+                        disabled={secondaryButton.disabled}
                     >
                         {secondaryButton.text}
                     </Button>
@@ -56,13 +72,21 @@ export function ConfirmDialog({
 
                 {primaryButton && (
                     <Button
-                        onClick={primaryButton.onClick}
+                        onClick={handlePrimaryButtonClick}
                         variant={'contained'}
+                        disabled={primaryButton.disabled}
                     >
                         {primaryButton.text}
                     </Button>
                 )}
             </DialogActions>
+            {errors && (
+                errors.map((error) => (
+                    <Alert key={error.field} severity="error" sx={{ mt: 2 }}>
+                        {error.message}
+                    </Alert>
+                ))
+            )}
         </Dialog>
     )
 }
@@ -88,7 +112,7 @@ interface FormDialogProps {
     fields: Field[]
     onSubmit: (data: any) => Promise<void>,
     onComplete?: () => void,
-    externalError?: string // 外部错误(例如api响应：上传失败)
+    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
     children?: React.ReactNode
 }
 
@@ -108,12 +132,7 @@ export function FormDialog({
             [field.name]: field.defaultValue || ''
         }), {})
     })
-    const [errors, setErrors] = useState<Record<string, string>>(() => {
-        return fields.reduce((acc, field) => ({
-            ...acc,
-            [field.name]: ''
-        }), {})
-    })
+    const [errors, setErrors] = useState<{ field: string, message: string }[]>([])
     const [disabled, setDisabled] = useState(false);
 
     // 监听 fields 的变化，更新 formData
@@ -127,25 +146,22 @@ export function FormDialog({
 
     const checkValidation = (field: Field) => {
         if (field.required && !formData[field.name]) {
-            setErrors({
-                ...errors,
-                [field.name]: '这个字段是必须的'
-            })
+            setErrors([{
+                field: field.name,
+                message: '这个字段是必须的'
+            }])
             return false
         }
         if (field.validation) {
             if (!field.validation.pattern.test(formData[field.name])) {
-                setErrors({
-                    ...errors,
-                    [field.name]: field.validation.error
-                })
+                setErrors([{
+                    field: field.name,
+                    message: field.validation.error
+                }])
                 return false
             }
         }
-        setErrors({
-            ...errors,
-            [field.name]: ''
-        })
+        setErrors(errors.filter(error => error.field !== field.name))
         return true
     }
 
@@ -182,14 +198,17 @@ export function FormDialog({
         setDisabled(true);
         await onSubmit(formData)
         setDisabled(false);
-        if (externalError) return
+        if (externalError) {
+            setErrors(externalError)
+            return
+        }
         onComplete?.();
         onClose()
     }
     const handleClose = () => {
         onClose()
         setFormData({})
-        setErrors({})
+        setErrors([])
     }
 
     return (
@@ -229,11 +248,6 @@ export function FormDialog({
                                                     {formData[field.name] ? formData[field.name].name : '选择图片'}
                                                 </Button>
                                             </label>
-                                            {errors[field.name] && (
-                                                <p className="text-red-500 text-sm mt-1">
-                                                    {errors[field.name]}
-                                                </p>
-                                            )}
                                         </div>
                                     )
                                 case 'text':
@@ -248,8 +262,6 @@ export function FormDialog({
                                             onChange={handleChange}
                                             placeholder={field.placeholder}
                                             required={field.required}
-                                            error={!!errors[field.name]}
-                                            helperText={errors[field.name]}
                                             fullWidth
                                         />
                                     )
@@ -277,10 +289,12 @@ export function FormDialog({
                     </Button>
                 </DialogActions>
             </form>
-            {externalError && (
-                <DialogContent>
-                    <Typography color="error" align='center'>{externalError}</Typography>
-                </DialogContent>
+            {errors && (
+                errors.map((error) => (
+                    <Alert key={error.field} severity="error" sx={{ mt: 2 }}>
+                        {error.message}
+                    </Alert>
+                ))
             )}
         </Dialog>
     )
