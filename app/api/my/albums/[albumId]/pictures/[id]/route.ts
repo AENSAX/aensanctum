@@ -3,7 +3,7 @@ import { getSessionUser } from '@/lib/session/getSession'
 import prisma from '@/lib/db'
 
 // 从图集中删除图片
-export async function DELETE(request: Request, { params }: { params: { albumId: string; id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ albumId: string; id: string }> }) {
   const session = await getSessionUser()
   if (!session) {
     return NextResponse.json(

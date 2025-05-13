@@ -37,8 +37,8 @@ function TabPanel(props: TabPanelProps) {
 
 export default function MePage() {
   const router = useRouter()
-  const { user, isLoading: userLoading } = useUser()
-  const { albums, error: albumsError, isLoading: albumsLoading } = useAlbums()
+  const { user, userLoading } = useUser()
+  const { albums, albumsErrors, albumsLoading } = useAlbums()
   const [tabValue, setTabValue] = useState(0)
 
   if (userLoading) {
@@ -85,16 +85,16 @@ export default function MePage() {
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
               <CircularProgress />
             </Box>
-          ) : albumsError ? (
+          ) : albumsErrors? (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-              <Typography color="error">{albumsError.message}</Typography>
+              <Typography color="error">{albumsErrors.message}</Typography>
             </Box>
           ) : albums?.length === 0 ? (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <Typography>你还没有创建任何图集。</Typography>
             </Box>
           ) : (
-            <AlbumsGrid albums={albums || []} onAlbumClick={handleAlbumClick}/>
+            <AlbumsGrid albums={albums || []} />
           )}
         </TabPanel>
       </Box>

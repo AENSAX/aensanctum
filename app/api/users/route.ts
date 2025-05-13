@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
-import { getAllUsers, createUser } from '@/lib/user'
 import { z } from 'zod'
 import prisma from '@/lib/db'
 import bcrypt from 'bcrypt'
 
 export async function GET() {
   try {
-    const users = await getAllUsers()
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+      }
+    })
     return NextResponse.json(users)
   } catch (error) {
     return NextResponse.json({
