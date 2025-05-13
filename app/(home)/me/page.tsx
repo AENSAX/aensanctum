@@ -4,10 +4,9 @@ import { Typography, Box, Container, Tabs, Tab, CircularProgress } from '@mui/ma
 import { AlbumsGrid } from '@/app/_components/album'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Album } from '@/lib/interfaces/interfaces'
 import { UserInfoCard } from '@/app/_components/user'
 import { useUser } from '@/lib/fetcher/fetchers'
-import { useAlbums } from '@/lib/fetcher/fetchers'
+import { useMyAlbums } from '@/lib/fetcher/fetchers'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -38,7 +37,7 @@ function TabPanel(props: TabPanelProps) {
 export default function MePage() {
   const router = useRouter()
   const { user, userLoading } = useUser()
-  const { albums, albumsErrors, albumsLoading } = useAlbums()
+  const { albums, albumsErrors, albumsLoading } = useMyAlbums()
   const [tabValue, setTabValue] = useState(0)
 
   if (userLoading) {
@@ -54,10 +53,6 @@ export default function MePage() {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number): void => {
     setTabValue(newValue)
-  }
-
-  const handleAlbumClick = (album: Album) => {
-    router.push(`/albums/${album.id}`)
   }
 
   return (

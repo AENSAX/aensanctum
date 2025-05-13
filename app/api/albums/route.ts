@@ -17,22 +17,8 @@ export async function GET() {
   const albums = await prisma.album.findMany({
     where: {
       OR: [
-        {
-          AND: [
-            { isPrivate: false },
-            {
-              pictures: {
-                some: {}
-              }
-            }
-          ]
-        },
-        { 
-          AND: [
-            { isPrivate: true }, 
-            { ownerId: session.id }
-          ] 
-        }
+        { isPrivate: false, pictures: { some: {} }},
+        { ownerId: session.id }
       ]
     },
     select: {
@@ -45,7 +31,11 @@ export async function GET() {
           url: true
         }
       }
+    },
+    orderBy: {
+      id: 'desc'
     }
+    
   })
   return NextResponse.json(albums, { status: 200 })
 }
