@@ -350,12 +350,14 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                         fileType: file.type,
                     }),
                 })
+                console.log('🏃🏃🏃🏃🏃🏃',presignedResponse)
 
                 if (!presignedResponse.ok) {
                     const reseult = await presignedResponse.json()
                     setUploadError(reseult.errors)
                     return
                 }
+                console.log('🏃🏃🏃🏃🏃🏃',presignedResponse)
 
                 const { presignedUrl, publicUrl } = await presignedResponse.json()
 
@@ -376,6 +378,7 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                 }
 
                 uploadedUrls.push(publicUrl)
+                console.log('上传成功', publicUrl)
             }
 
             const saveResponse = await fetch(`/api/my/albums/${albumId}`, {
@@ -501,7 +504,18 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                             ))}
                         </Box>
                     )}
-
+                    {isUploading && (
+                        <Alert 
+                            severity="info"
+                            sx={{
+                                '& .MuiAlert-message': {
+                                    width: '100%'
+                                }
+                            }}
+                        >
+                            正在上传图片,请勿刷新或点击页面...
+                        </Alert>
+                    )}
                     {uploadError && uploadError.map((error) => (
                         <Alert 
                             key={error.field} 
