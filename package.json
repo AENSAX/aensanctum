@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
+    "@aws-sdk/s3-request-presigner": "^3.808.0",
     "@clerk/nextjs": "^6.18.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",

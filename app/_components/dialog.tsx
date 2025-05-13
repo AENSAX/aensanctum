@@ -198,11 +198,13 @@ export function FormDialog({
         setDisabled(true);
         await onSubmit(formData)
         setDisabled(false);
-        if (externalError) {
+        if (externalError && externalError.length > 0) {
             setErrors(externalError)
             return
         }
         onComplete?.();
+        setFormData({})
+        setErrors([])
         onClose()
     }
     const handleClose = () => {

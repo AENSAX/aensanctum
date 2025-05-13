@@ -85,7 +85,6 @@ export default function AlbumPage() {
     }
 
     const handleEditSuccess = () => {
-        mutate(`/api/albums/${albumId}`)
         setEditDialogOpen(false)
     }
 

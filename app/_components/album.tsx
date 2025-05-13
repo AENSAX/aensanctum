@@ -316,8 +316,19 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
 
         if (files.length > 10) {
             setUploadError([{ field: 'images', message: '一次最多只能上传10张图片' }])
+            setPictureList([])
             return
         }
+
+        const totalSize = Array.from(files).reduce((acc, file) => acc + file.size, 0)
+        const maxSize = 50 * 1024 * 1024 // 50MB
+
+        if (totalSize > maxSize) {
+            setUploadError([{ field: 'images', message: '所选图片总大小不能超过50MB' }])
+            setPictureList([])
+            return
+        }
+
         setPictureList(Array.from(files))
         setUploadError([])
     }
@@ -325,26 +336,93 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
     const handleUpload = async () => {
         if (pictureList.length === 0) return
         setIsUploading(true)
-        const formData = new FormData()
-        pictureList.forEach((file) => {
-            formData.append('images', file)
-        })
-        const response = await fetch(`/api/my/albums/${albumId}`, {
-            method: 'POST',
-            body: formData,
-        })
-        if (!response.ok) {
-            const result = await response.json()
-            setUploadError(result.errors)
+        setUploadError([])
+
+        const totalSize = pictureList.reduce((acc, file) => acc + file.size, 0)
+        const maxSize = 50 * 1024 * 1024
+
+        if (totalSize > maxSize) {
+            setUploadError([{ field: 'images', message: '所选图片总大小不能超过50MB' }])
+            setIsUploading(false)
+            return
         }
-        setIsUploading(false)
-        mutate(`/api/albums/${albumId}`)
+
+        try {
+            const uploadedUrls: string[] = []
+
+            for (const file of pictureList) {
+                const presignedResponse = await fetch(`/api/my/albums/${albumId}/presigned`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        fileType: file.type,
+                    }),
+                })
+
+                if (!presignedResponse.ok) {
+                    const reseult = await presignedResponse.json()
+                    setUploadError(reseult.errors)
+                    return
+                }
+
+                const { presignedUrl, publicUrl } = await presignedResponse.json()
+
+
+                const uploadResponse = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    body: file,
+                    headers: {
+                        'Content-Type': file.type,
+                    },
+                    mode: 'cors',
+                    credentials: 'omit'
+                })
+
+                if (!uploadResponse.ok) {
+                    setUploadError([{ field: 'upload', message: '上传文件失败' }])
+                    return
+                }
+
+                uploadedUrls.push(publicUrl)
+            }
+
+            const saveResponse = await fetch(`/api/my/albums/${albumId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    urls: uploadedUrls,
+                }),
+            })
+
+            if (!saveResponse.ok) {
+                setUploadError([{ field: 'save', message: "保存图片信息失败" }])
+                return
+            }
+
+            mutate(`/api/albums/${albumId}`)
+            handleClose()
+        } catch (error) {
+            setUploadError([{
+                field: 'upload',
+                message: error instanceof Error ? error.message : '上传失败'
+            }])
+        } finally {
+            setIsUploading(false)
+        }
+    }
+    const handleClose = () => {
         setPictureList([])
+        setUploadError([])
         onClose()
     }
 
     return (
-        <Dialog open={isOpen} onClose={onClose} maxWidth="sm" fullWidth>
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle>添加图片</DialogTitle>
             <DialogContent>
                 <Box sx={{ 
@@ -452,7 +530,7 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
             </DialogContent>
             <DialogActions>
                 <Button 
-                    onClick={onClose} 
+                    onClick={handleClose} 
                     variant="outlined"
                     sx={{ 
                         minWidth: 120,
@@ -556,6 +634,7 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
                 fields={albumFields}
                 onSubmit={handleSubmit}
                 externalError={responseError}
+                onComplete={onSuccess}
             >
                 <FormControlLabel
                     control={

@@ -106,20 +106,25 @@ const uploadSchema = z.object({
       '不支持的文件类型，仅支持JPG、PNG、GIF和WebP格式'
     )
 })
+
+const schema = z.object({
+  urls: z.array(z.string().url()).min(1).max(10)
+});
+
 //上传图片
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ albumId: string }> }
 ) {
-  const { albumId } = await params
-  const session = await getSessionUser()
+  const { albumId } = await params;
+  const session = await getSessionUser();
   if (!session) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
         message: '未授权'
       }]
-    }, { status: 401 })
+    }, { status: 401 });
   }
 
   const album = await prisma.album.findFirst({
@@ -127,7 +132,7 @@ export async function POST(
       id: parseInt(albumId),
       ownerId: session.id
     }
-  })
+  });
 
   if (!album) {
     return NextResponse.json({
@@ -135,57 +140,36 @@ export async function POST(
         field: 'not_found',
         message: '图集不存在'
       }]
-    }, { status: 404 })
+    }, { status: 404 });
   }
 
-  const formData = await request.formData()
-  const files = formData.getAll('images') as File[]
-
-  const result = uploadSchema.safeParse({ files })
+  const result = schema.safeParse(await request.json());
   if (!result.success) {
     return NextResponse.json({
       errors: result.error.errors.map(err => ({
         field: err.path.join('.'),
         message: err.message
       }))
-    }, { status: 400 })
+    }, { status: 400 });
   }
 
-  const uploadPromises = result.data.files.map(async (file) => {
-    const fileExtension = file.name.slice(file.name.lastIndexOf('.'))
-    const uniqueFileName = `${uuidv4()}${fileExtension}`
-    const key = `images/${uniqueFileName}`
-
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-
-    await s3.send(new PutObjectCommand({
-      Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
-    }))
-
-    const url = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${key}`
-
-    return prisma.picture.create({
-      data: {
-        url,
-        albumId: parseInt(albumId)
-      }
-    })
-  })
+  const { urls } = result.data;
 
   try {
-    await Promise.all(uploadPromises)
+    await prisma.picture.createMany({
+      data: urls.map(url => ({
+        url,
+        albumId: parseInt(albumId)
+      }))
+    });
   } catch (error) {
     return NextResponse.json({
       errors: [{
         field: 'internal_server_error',
-        message: '服务器错误'
+        message: '保存图片信息失败'
       }]
-    }, { status: 500 })
+    }, { status: 500 });
   }
 
-  return NextResponse.json({ status: 200 })
+  return NextResponse.json({ status: 200 });
 }
