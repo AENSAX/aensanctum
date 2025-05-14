@@ -70,6 +70,9 @@ export default function MePage() {
                 '&.Mui-selected': {
                 },
               },
+              '& .MuiTabs-indicator': {
+                display: 'none',
+              },
             }}
           >
             <Tab label="我的图集" />
