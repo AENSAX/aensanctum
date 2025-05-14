@@ -222,7 +222,7 @@ export function PicturesGrid({ pictures, albumId }: { pictures: Picture[], album
                             </IconButton>)}
                             <Image
                                 onClick={() => handleImageClick(pic)}
-                                src={pic.url}
+                                src={pic.thumbnailUrl}
                                 alt={`图片${pic.id}`}
                                 width={500}
                                 height={500}

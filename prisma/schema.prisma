@@ -17,10 +17,11 @@ model User {
 }
 
 model Picture {
-  id        Int      @id @default(autoincrement())
-  url       String
-  album     Album   @relation(fields: [albumId], references: [id], onDelete: Cascade)
-  albumId   Int
+  id          Int      @id @default(autoincrement())
+  url         String
+  thumbnailUrl String  // 缩略图URL
+  album       Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  albumId     Int
 }
 
 model Album {

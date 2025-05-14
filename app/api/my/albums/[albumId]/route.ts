@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/session/getSession';
 import prisma from '@/lib/db';
 import { z } from 'zod';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
+import sharp from 'sharp';
+import { Readable } from 'stream';
+import path from 'path';
+import fs from 'fs/promises';
 
 //删除我的图集
 export async function DELETE(request: Request, { params }: { params: Promise<{ albumId: string }> }) {
@@ -83,8 +87,6 @@ export async function PUT(
   return NextResponse.json({ status: 200 });
 }
 
-
-
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -92,20 +94,55 @@ const s3 = new S3Client({
     accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
   },
-})
+});
 
-const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const
-type AllowedType = typeof allowedTypes[number]
+function getFileNameFromUrl(url: string): string {
+  const urlParts = url.split('/');
+  return urlParts[urlParts.length - 1];
+}
 
-const uploadSchema = z.object({
-  files: z.array(z.instanceof(File))
-    .min(1, '请选择要上传的图片')
-    .max(10, '一次最多只能上传10张图片')
-    .refine(
-      (files) => files.every(file => allowedTypes.includes(file.type as AllowedType)),
-      '不支持的文件类型，仅支持JPG、PNG、GIF和WebP格式'
-    )
-})
+async function processImage(url: string): Promise<string> {
+  const fileName = getFileNameFromUrl(url);
+  const key = `images/${fileName}`;
+  
+  const getCommand = new GetObjectCommand({
+    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    Key: key,
+  });
+  
+  const response = await s3.send(getCommand);
+  if (!response.Body) {
+    throw new Error('Failed to get image from R2');
+  }
+
+  const chunks = [];
+  for await (const chunk of response.Body as Readable) {
+    chunks.push(chunk);
+  }
+  const buffer = Buffer.concat(chunks);
+
+  const thumbnailBuffer = await sharp(buffer)
+    .resize(300, 300, {
+      fit: 'cover',
+      position: 'centre'
+    })
+    .jpeg({ quality: 80 })
+    .toBuffer();
+
+  const thumbnailFileName = `thumb_${fileName}`;
+  const thumbnailKey = `thumbnails/${thumbnailFileName}`;
+
+  const putCommand = new PutObjectCommand({
+    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+    Key: thumbnailKey,
+    Body: thumbnailBuffer,
+    ContentType: 'image/jpeg',
+  });
+
+  await s3.send(putCommand);
+
+  return `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${thumbnailKey}`;
+}
 
 const schema = z.object({
   urls: z.array(z.string().url()).min(1).max(10)
@@ -156,17 +193,25 @@ export async function POST(
   const { urls } = result.data;
 
   try {
+    const processedImages = await Promise.all(
+      urls.map(async (url) => {
+        const thumbnailUrl = await processImage(url);
+        return {
+          url,
+          thumbnailUrl,
+          albumId: parseInt(albumId)
+        };
+      })
+    );
+
     await prisma.picture.createMany({
-      data: urls.map(url => ({
-        url,
-        albumId: parseInt(albumId)
-      }))
+      data: processedImages
     });
   } catch (error) {
     return NextResponse.json({
       errors: [{
         field: 'internal_server_error',
-        message: '保存图片信息失败'
+        message: '处理图片失败'
       }]
     }, { status: 500 });
   }

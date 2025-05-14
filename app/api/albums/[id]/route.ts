@@ -29,6 +29,7 @@ export async function GET(request: Request,
           id: true,
           url: true,
           albumId: true,
+          thumbnailUrl: true,
         }
       }
     }

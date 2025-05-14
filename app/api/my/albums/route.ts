@@ -19,7 +19,10 @@ export async function GET() {
             pictures: {
                 take: 1,
                 select: {
-                    url: true
+                    id: true,
+                    url: true,
+                    albumId: true,
+                    thumbnailUrl: true,
                 }
             }
         }

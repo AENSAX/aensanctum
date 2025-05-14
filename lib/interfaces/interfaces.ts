@@ -10,11 +10,7 @@ export interface AlbumDetail {
         name: string;
         id: number;
     };
-    pictures: {
-        albumId: number;
-        id: number;
-        url: string;
-    }[];
+    pictures: Picture[];
     name: string;
     id: number;
     description: string;
@@ -27,6 +23,7 @@ export interface Picture {
     albumId: number
     id: number
     url: string
+    thumbnailUrl: string
 }
 
 export interface User {

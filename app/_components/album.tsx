@@ -2,7 +2,7 @@
 import { Box, Typography, Button, IconButton, FormControlLabel, Switch, Dialog, DialogContent, DialogTitle, DialogActions, CircularProgress, Alert } from '@mui/material'
 import Image from 'next/image'
 import { formatDistanceToNow } from 'date-fns'
-import { de, zhCN } from 'date-fns/locale'
+import { zhCN } from 'date-fns/locale'
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate'
 import EditIcon from '@mui/icons-material/Edit'
 import LockIcon from '@mui/icons-material/Lock'
@@ -241,7 +241,7 @@ export function AlbumsGrid({ albums }: { albums: Album[] }) {
                         {album.pictures.length > 0 ? (
                             <>
                                 <Image
-                                    src={album.pictures[0].url}
+                                    src={album.pictures[0].thumbnailUrl}
                                     alt={`${album.id}`}
                                     width={500}
                                     height={500}
@@ -357,7 +357,6 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                     setUploadError(reseult.errors)
                     return
                 }
-                console.log('🏃🏃🏃🏃🏃🏃',presignedResponse)
 
                 const { presignedUrl, publicUrl } = await presignedResponse.json()
 
@@ -378,7 +377,6 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                 }
 
                 uploadedUrls.push(publicUrl)
-                console.log('上传成功', publicUrl)
             }
 
             const saveResponse = await fetch(`/api/my/albums/${albumId}`, {
