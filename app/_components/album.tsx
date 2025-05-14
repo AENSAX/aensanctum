@@ -350,8 +350,6 @@ export function EditAlbumPictures({ isOpen, onClose, albumId }: EditAlbumPicture
                         fileType: file.type,
                     }),
                 })
-                console.log('🏃🏃🏃🏃🏃🏃',presignedResponse)
-
                 if (!presignedResponse.ok) {
                     const reseult = await presignedResponse.json()
                     setUploadError(reseult.errors)
