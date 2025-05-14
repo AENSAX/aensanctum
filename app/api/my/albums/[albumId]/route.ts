@@ -123,7 +123,8 @@ async function processImage(url: string): Promise<string> {
 
   const thumbnailBuffer = await sharp(buffer)
     .resize(300, 300, {
-      fit: 'cover',
+      fit: 'inside',
+      withoutEnlargement: true,
       position: 'centre'
     })
     .jpeg({ quality: 80 })
