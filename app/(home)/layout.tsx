@@ -134,7 +134,7 @@ export default function HomeLayout({
         isOpen={createAlbumDialogOpen}
         fields={newAlbumFields}
         onSubmit={handleNewAlbumSubmit}
-        onComplete={() => {mutate('/api/albums') ;console.log('图集创建成功')}}
+        onComplete={() => {mutate('/api/albums');mutate('/api/my/albums')}}
         externalError={albumSubmitResponseError}
       />
     </Box>
