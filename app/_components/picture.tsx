@@ -69,7 +69,6 @@ function ImagePreview({ open, onClose, image }: ImagePreviewProps) {
                     justifyContent: 'center'
                 }}>
                     <Image
-                        unoptimized
                         src={image.url}
                         alt={`图片${image.id}`}
                         fill
@@ -227,7 +226,6 @@ export function PicturesGrid({ pictures, albumId }: { pictures: Picture[], album
                                 alt={`图片${pic.id}`}
                                 width={500}
                                 height={500}
-                                unoptimized
                                 style={{
                                     width: '100%',
                                     height: 'auto',
