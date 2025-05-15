@@ -1,14 +1,16 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  //allowedDevOrigins: ['192.168.31.70'],
-  images: {
-    remotePatterns: [
-      {
-        hostname: 'aenstarax.xyz',
-      },
-    ],
-  },
+    images: {
+        remotePatterns: [
+            {
+                hostname: process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN || '',
+            },
+        ],
+    },
+    eslint: {
+        dirs: ['app', 'lib'],
+    },
 };
 
 export default nextConfig;

@@ -20,10 +20,10 @@ export interface AlbumDetail {
 }
 
 export interface Picture {
-    albumId: number
-    id: number
-    url: string
-    thumbnailUrl: string
+    albumId: number;
+    id: number;
+    url: string;
+    thumbnailUrl: string;
 }
 
 export interface User {
@@ -35,4 +35,12 @@ export interface User {
     isActive: boolean;
 }
 
+export class ErrorResponse extends Error {
+    errors: { field: string; message: string }[];
 
+    constructor(errors: { field: string; message: string }[]) {
+        super('Validation failed');
+        this.errors = errors;
+        this.name = 'ErrorResponse';
+    }
+}

@@ -1,31 +1,38 @@
-'use client'
+'use client';
 
-import { Drawer, List, ListItem, ListItemButton, ListItemIcon, Box } from '@mui/material'
-import Link from 'next/link'
-import { useRouter, usePathname } from 'next/navigation'
-import Image from 'next/image'
-import HomeIcon from '@mui/icons-material/Home'
-import PersonIcon from '@mui/icons-material/Person'
-import MenuIcon from '@mui/icons-material/Menu'
-import { AppBar, Toolbar, IconButton, Tabs, Tab } from '@mui/material'
+import {
+    Drawer,
+    List,
+    ListItem,
+    ListItemButton,
+    ListItemIcon,
+    Box,
+} from '@mui/material';
+import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
+import Image from 'next/image';
+import HomeIcon from '@mui/icons-material/Home';
+import PersonIcon from '@mui/icons-material/Person';
+import MenuIcon from '@mui/icons-material/Menu';
+import { AppBar, Toolbar, IconButton, Tabs, Tab } from '@mui/material';
+import React from 'react';
 
 // 侧边栏宽度
-const drawerWidth = 64
+const drawerWidth = 64;
 
 // 定义按钮项接口
 interface LeftBarItem {
-    icon: React.ReactElement
-    onClick?: () => void
-    href?: string
+    icon: React.ReactElement;
+    onClick?: () => void;
+    href?: string;
 }
 
 interface LeftBarProps {
-    isOpen: boolean
-    items: LeftBarItem[]
+    isOpen: boolean;
+    items: LeftBarItem[];
 }
 
 export function LeftBar({ isOpen, items }: LeftBarProps) {
-
     return (
         <Drawer
             sx={{
@@ -44,7 +51,7 @@ export function LeftBar({ isOpen, items }: LeftBarProps) {
                 <List>
                     {items.map((item, index) => (
                         <ListItem key={index} disablePadding>
-                            <ListItemButton 
+                            <ListItemButton
                                 component={item.href ? Link : 'div'}
                                 href={item.href}
                                 onClick={item.onClick}
@@ -53,10 +60,10 @@ export function LeftBar({ isOpen, items }: LeftBarProps) {
                                     px: 2.5,
                                 }}
                             >
-                                <ListItemIcon 
-                                    sx={{ 
+                                <ListItemIcon
+                                    sx={{
                                         minWidth: 'auto',
-                                        justifyContent: 'center'
+                                        justifyContent: 'center',
                                     }}
                                 >
                                     {item.icon}
@@ -67,32 +74,38 @@ export function LeftBar({ isOpen, items }: LeftBarProps) {
                 </List>
             </Box>
         </Drawer>
-    )
+    );
 }
 
 //顶部导航栏标签
 interface TopBarTab {
-    label: string
-    value: string
-    icon: React.ReactElement
+    label: string;
+    value: string;
+    icon: React.ReactElement;
 }
 // 顶部导航栏组件的属性接口
 interface TopBarProps {
-    tabs: TopBarTab[]
-    onLeftMenuItemClick: () => void
+    tabs: TopBarTab[];
+    onLeftMenuItemClick: () => void;
 }
 
-export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) {
-    const router = useRouter()
-    const pathname = usePathname()
+export function TopBar({
+    tabs,
+    onLeftMenuItemClick: onMenuClick,
+}: TopBarProps) {
+    const router = useRouter();
+    const pathname = usePathname();
 
     const handleTabChange = (event: React.SyntheticEvent, newValue: string) => {
-        router.push(newValue)
-    }
+        router.push(newValue);
+    };
 
     const getTabValue = () => {
-        return tabs.find(t => pathname.startsWith(t.value))?.value || tabs[0].value
-    }
+        return (
+            tabs.find((t) => pathname.startsWith(t.value))?.value ||
+            tabs[0].value
+        );
+    };
 
     return (
         <AppBar
@@ -136,17 +149,20 @@ export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) 
                             '& .MuiTab-root': {
                                 minHeight: 'auto',
                                 padding: '8px 16px',
-                                transition: theme => theme.transitions.create('background-color'),
+                                transition: (theme) =>
+                                    theme.transitions.create(
+                                        'background-color',
+                                    ),
                                 '&.Mui-selected': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.4)',  // 选中状态背景
-                                    color: 'text.primary'
+                                    backgroundColor: 'rgba(255, 255, 255, 0.4)', // 选中状态背景
+                                    color: 'text.primary',
                                 },
                                 ':hover': {
-                                    backgroundColor: 'rgba(255, 255, 255, 0.6)'
-                                }
+                                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+                                },
                             },
                             '& .MuiTabs-indicator': {
-                                display: 'none',  // 隐藏底部指示器
+                                display: 'none', // 隐藏底部指示器
                             },
                         }}
                     >
@@ -177,7 +193,7 @@ export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) 
                     href="/me"
                     sx={{
                         '&:hover': {
-                            backgroundColor: 'rgba(255, 255, 255, 0.1)',  // 悬停效果
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)', // 悬停效果
                         },
                     }}
                 >
@@ -185,5 +201,5 @@ export function TopBar({ tabs, onLeftMenuItemClick: onMenuClick }: TopBarProps) 
                 </IconButton>
             </Toolbar>
         </AppBar>
-    )
+    );
 }

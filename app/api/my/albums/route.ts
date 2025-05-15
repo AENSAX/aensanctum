@@ -6,17 +6,11 @@ import prisma from '@/lib/db';
 export async function GET() {
     const authId = await checkAuth();
     if (authId === -1) {
-        return NextResponse.json(
-            {
-                errors: [{
-                    field: 'unauthorized',
-                    message: '未授权'
-                }]
-            }, { status: 401 });
+        return NextResponse.json({ status: 401 });
     }
     const albums = await prisma.album.findMany({
         where: {
-            ownerId: authId
+            ownerId: authId,
         },
         select: {
             id: true,
@@ -29,9 +23,9 @@ export async function GET() {
                     url: true,
                     albumId: true,
                     thumbnailUrl: true,
-                }
-            }
-        }
+                },
+            },
+        },
     });
 
     return NextResponse.json(albums);

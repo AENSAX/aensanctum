@@ -1,89 +1,101 @@
-'use client'
-import { Box, Container, Typography, CircularProgress, Divider } from '@mui/material'
-import { mutate } from 'swr'
-import { PicturesGrid } from '@/app/_components/picture'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { EditAlbumInfo, EditAlbumPictures } from '@/app/_components/album'
-import { ConfirmDialog } from '@/app/_components/dialog'
-import { AlbumDetailCard } from '@/app/_components/album'
-import { useUser, useAlbum } from '@/lib/fetcher/fetchers'
-import { useParams } from 'next/navigation'
-
+'use client';
+import {
+    Box,
+    Container,
+    Typography,
+    CircularProgress,
+    Divider,
+} from '@mui/material';
+import { PicturesGrid } from '@/app/_components/picture';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { EditAlbumInfo, EditAlbumPictures } from '@/app/_components/album';
+import { ConfirmDialog } from '@/app/_components/dialog';
+import { AlbumDetailCard } from '@/app/_components/album';
+import { useUser, useAlbum } from '@/lib/fetcher/fetchers';
+import { useParams } from 'next/navigation';
 
 export default function AlbumPage() {
-    const albumId = useParams().id as string
-    const { album, albumErrors, albumLoading } = useAlbum(albumId)
-    const { user, userErrors, userLoading } = useUser()
+    const albumId = useParams().id as string;
+    const { album, albumErrors, albumLoading } = useAlbum(albumId);
+    const { user, userErrors, userLoading } = useUser();
 
-    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-    const [editDialogOpen, setEditDialogOpen] = useState(false)
-    const [editPicturesDialogOpen, setEditPicturesDialogOpen] = useState(false)
-    const [isDeleting, setIsDeleting] = useState(false)
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editPicturesDialogOpen, setEditPicturesDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    const router = useRouter()
+    const router = useRouter();
     if (albumLoading || userLoading) {
         return (
-            <Box sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '200px'
-            }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '200px',
+                }}
+            >
                 <CircularProgress />
             </Box>
-        )
+        );
     }
     if (albumErrors && albumErrors.length > 0) {
         return (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-                {albumErrors.map((error: { field: string, message: string }) => (
-                    <Typography key={error.field} color="error">{error.message}</Typography>
-                ))}
+                {albumErrors.map(
+                    (error: { field: string; message: string }) => (
+                        <Typography key={error.field} color="error">
+                            {error.message}
+                        </Typography>
+                    ),
+                )}
             </Box>
-        )
+        );
     }
     if (userErrors && userErrors.length > 0) {
         return (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
-                {userErrors.map((error: { field: string, message: string }) => (
-                    <Typography key={error.field} color="error">{error.message}</Typography>
+                {userErrors.map((error: { field: string; message: string }) => (
+                    <Typography key={error.field} color="error">
+                        {error.message}
+                    </Typography>
                 ))}
             </Box>
-        )
+        );
     }
     if (!album) {
-        return <Typography align="center">图集不存在</Typography>
+        return <Typography align="center">图集不存在</Typography>;
     }
     if (!user) {
-        return <Typography align="center">请先登录</Typography>
+        return <Typography align="center">请先登录</Typography>;
     }
-    const canEdit = user.id === album.ownerId
-
+    const canEdit = user.id === album.ownerId;
 
     if (album.isPrivate && !canEdit) {
-        return <Typography align="center">你无权限访问这个图集</Typography>
+        return <Typography align="center">你无权限访问这个图集</Typography>;
     }
 
     const handleDeleteAlbum = async () => {
-        setIsDeleting(true)
+        setIsDeleting(true);
         const response = await fetch(`/api/my/albums/${albumId}`, {
             method: 'DELETE',
-        })
+        });
 
         if (!response.ok) {
-            const result = await response.json()
-            throw result
+            const result = await response.json();
+            setIsDeleting(false);
+            throw result;
         }
 
-        router.push('/me')
-        setIsDeleting(false)
-        setDeleteDialogOpen(false)
-    }
+        router.push('/me');
+        setIsDeleting(false);
+        setDeleteDialogOpen(false);
+    };
 
     const handleEditSuccess = () => {
-        setEditDialogOpen(false)
-    }
+        setEditDialogOpen(false);
+    };
 
     return (
         <Container maxWidth="lg">
@@ -117,12 +129,12 @@ export default function AlbumPage() {
                 primaryButton={{
                     text: '删除',
                     onClick: handleDeleteAlbum,
-                    disabled: isDeleting
+                    disabled: isDeleting,
                 }}
                 secondaryButton={{
                     text: '取消',
                     onClick: () => setDeleteDialogOpen(false),
-                    disabled: isDeleting
+                    disabled: isDeleting,
                 }}
             />
             {/* 编辑图片对话框 */}
@@ -143,5 +155,5 @@ export default function AlbumPage() {
                 />
             )}
         </Container>
-    )
+    );
 }
