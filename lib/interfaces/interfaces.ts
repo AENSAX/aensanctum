@@ -20,10 +20,10 @@ export interface AlbumDetail {
 }
 
 export interface Picture {
-    albumId: number
-    id: number
-    url: string
-    thumbnailUrl: string
+    albumId: number;
+    id: number;
+    url: string;
+    thumbnailUrl: string;
 }
 
 export interface User {
@@ -31,5 +31,3 @@ export interface User {
     name: string;
     email: string;
 }
-
-

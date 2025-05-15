@@ -6,11 +6,11 @@ import prisma from '@/lib/db';
 export async function GET() {
     const session = await getSessionUser();
     if (!session) {
-        return NextResponse.json({ status: 401 })
+        return NextResponse.json({ status: 401 });
     }
     const albums = await prisma.album.findMany({
         where: {
-            ownerId: session.id
+            ownerId: session.id,
         },
         select: {
             id: true,
@@ -23,9 +23,9 @@ export async function GET() {
                     url: true,
                     albumId: true,
                     thumbnailUrl: true,
-                }
-            }
-        }
+                },
+            },
+        },
     });
 
     return NextResponse.json(albums);

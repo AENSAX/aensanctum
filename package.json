@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prepare": "husky"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.802.0",
@@ -33,14 +34,22 @@
     "zod": "^3.24.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.26.0",
     "@tailwindcss/postcss": "^4.1.4",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "eslint": "^9.26.0",
+    "eslint-config-next": "15.3.2",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.1.0",
     "postcss": "^8.5.3",
+    "prettier": "3.5.3",
     "tailwindcss": "^4.1.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "typescript-eslint": "^8.32.1"
   }
 }

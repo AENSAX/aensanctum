@@ -7,88 +7,113 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
 const s3 = new S3Client({
-  region: 'auto',
-  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
-  },
+    region: 'auto',
+    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+    },
 });
 
-const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'] as const;
+const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+] as const;
 
 const schema = z.object({
-  fileType: z.enum(allowedTypes as unknown as [string, ...string[]]),
-  fileName: z.string().min(1),
+    fileType: z.enum(allowedTypes as unknown as [string, ...string[]]),
+    fileName: z.string().min(1),
 });
 
 export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ albumId: string }> }
+    request: Request,
+    { params }: { params: Promise<{ albumId: string }> },
 ) {
-  const session = await getSessionUser();
-  if (!session) {
-    return NextResponse.json({
-      errors: [{
-        field: 'unauthorized',
-        message: '未授权'
-      }]
-    }, { status: 401 });
-  }
-
-  const { albumId } = await params;
-  const album = await prisma.album.findFirst({
-    where: {
-      id: parseInt(albumId),
-      ownerId: session.id
+    const session = await getSessionUser();
+    if (!session) {
+        return NextResponse.json(
+            {
+                errors: [
+                    {
+                        field: 'unauthorized',
+                        message: '未授权',
+                    },
+                ],
+            },
+            { status: 401 },
+        );
     }
-  });
 
-  if (!album) {
-    return NextResponse.json({
-      errors: [{
-        field: 'not_found',
-        message: '图集不存在'
-      }]
-    }, { status: 404 });
-  }
-
-  const result = schema.safeParse(await request.json());
-  if (!result.success) {
-    return NextResponse.json({
-      errors: result.error.errors.map(err => ({
-        field: err.path.join('.'),
-        message: err.message
-      }))
-    }, { status: 400 });
-  }
-
-  const { fileType, fileName } = result.data;
-  const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
-  const uniqueFileName = `${uuidv4()}${fileExtension}`;
-  const key = `images/${uniqueFileName}`;
-
-  const putCommand = new PutObjectCommand({
-    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-    Key: key,
-    ContentType: fileType,
-  });
-
-  try {
-    const presignedUrl = await getSignedUrl(s3, putCommand, { expiresIn: 3600 });
-    const publicUrl = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${key}`;
-
-    return NextResponse.json({
-      presignedUrl,
-      publicUrl,
-      key
+    const { albumId } = await params;
+    const album = await prisma.album.findFirst({
+        where: {
+            id: parseInt(albumId),
+            ownerId: session.id,
+        },
     });
-  } catch (error) {
-    return NextResponse.json({
-      errors: [{
-        field: 'internal_server_error',
-        message: '生成预签名URL失败'
-      }]
-    }, { status: 500 });
-  }
-} 
+
+    if (!album) {
+        return NextResponse.json(
+            {
+                errors: [
+                    {
+                        field: 'not_found',
+                        message: '图集不存在',
+                    },
+                ],
+            },
+            { status: 404 },
+        );
+    }
+
+    const result = schema.safeParse(await request.json());
+    if (!result.success) {
+        return NextResponse.json(
+            {
+                errors: result.error.errors.map((err) => ({
+                    field: err.path.join('.'),
+                    message: err.message,
+                })),
+            },
+            { status: 400 },
+        );
+    }
+
+    const { fileType, fileName } = result.data;
+    const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
+    const uniqueFileName = `${uuidv4()}${fileExtension}`;
+    const key = `images/${uniqueFileName}`;
+
+    const putCommand = new PutObjectCommand({
+        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+        Key: key,
+        ContentType: fileType,
+    });
+
+    try {
+        const presignedUrl = await getSignedUrl(s3, putCommand, {
+            expiresIn: 3600,
+        });
+        const publicUrl = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${key}`;
+
+        return NextResponse.json({
+            presignedUrl,
+            publicUrl,
+            key,
+        });
+    } catch {
+        return NextResponse.json(
+            {
+                errors: [
+                    {
+                        field: 'internal_server_error',
+                        message: '生成预签名URL失败',
+                    },
+                ],
+            },
+            { status: 500 },
+        );
+    }
+}

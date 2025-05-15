@@ -1,0 +1,4 @@
+echo 'running prettier pre-commit hook...'
+npx prettier --write app lib
+echo 'running eslint pre-commit hook...'
+npx next lint

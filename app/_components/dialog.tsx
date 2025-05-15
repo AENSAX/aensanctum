@@ -1,23 +1,33 @@
-'use client'
+'use client';
 
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography, Alert } from '@mui/material'
-import { useState, useEffect } from 'react'
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    Stack,
+    Alert,
+} from '@mui/material';
+import { useState, useEffect } from 'react';
+import React from 'react';
 
 //确认对话框
 interface ButtonProps {
-    text: string
-    onClick: () => void
-    disabled?: boolean
+    text: string;
+    onClick: () => void;
+    disabled?: boolean;
 }
 
 interface ConfirmProps {
-    isOpen: boolean
-    onClose: () => void
-    title: string
-    content: string
-    primaryButton?: ButtonProps
-    secondaryButton?: ButtonProps
-    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    content: string;
+    primaryButton?: ButtonProps;
+    secondaryButton?: ButtonProps;
+    externalError?: { field: string; message: string }[]; // 外部错误(例如api响应：上传失败)
 }
 
 export function ConfirmDialog({
@@ -27,37 +37,31 @@ export function ConfirmDialog({
     content,
     primaryButton,
     secondaryButton,
-    externalError
+    externalError,
 }: ConfirmProps) {
-
     if (!primaryButton && !secondaryButton) {
-        throw new Error('At least one button must be provided')
+        throw new Error('At least one button must be provided');
     }
-    const [errors, setErrors] = useState<{ field: string, message: string }[]>([])
+    const [errors, setErrors] = useState<{ field: string; message: string }[]>(
+        [],
+    );
     const handlePrimaryButtonClick = async () => {
-        await primaryButton?.onClick()
+        await primaryButton?.onClick();
         if (externalError) {
-            setErrors(externalError)
+            setErrors(externalError);
         }
-    }
+    };
     const handleSecondaryButtonClick = async () => {
-        await secondaryButton?.onClick()
+        await secondaryButton?.onClick();
         if (externalError) {
-            setErrors(externalError)
+            setErrors(externalError);
         }
-    }
+    };
     return (
-        <Dialog
-            open={isOpen}
-            onClose={onClose}
-        >
-            <DialogTitle id="confirm-dialog-title">
-                {title}
-            </DialogTitle>
+        <Dialog open={isOpen} onClose={onClose}>
+            <DialogTitle id="confirm-dialog-title">{title}</DialogTitle>
 
-            <DialogContent>
-                {content}
-            </DialogContent>
+            <DialogContent>{content}</DialogContent>
 
             <DialogActions>
                 {secondaryButton && (
@@ -80,43 +84,58 @@ export function ConfirmDialog({
                     </Button>
                 )}
             </DialogActions>
-            {errors && (
+            {errors &&
                 errors.map((error) => (
                     <Alert key={error.field} severity="error" sx={{ mt: 2 }}>
                         {error.message}
                     </Alert>
-                ))
-            )}
+                ))}
         </Dialog>
-    )
+    );
 }
 
-//表单对话框
-interface Field {
-    name: string
-    label: string
-    type: string
-    required: boolean
-    defaultValue?: string
-    placeholder?: string
-    validation?: {
-        pattern: RegExp
-        error: string
-    }
-}
+type FieldType = {
+    file: File;
+    text: string;
+    number: number;
+    flag: boolean;
+};
 
-interface FormDialogProps {
-    title: string
-    onClose: () => void
-    isOpen: boolean
-    fields: Field[]
-    onSubmit: (data: any) => Promise<void>,
-    onComplete?: () => void,
-    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
-    children?: React.ReactNode
-}
+type FieldDeclaration<Typ extends keyof FieldType> = {
+    label: string;
+    type: Typ;
+    required: boolean;
+    defaultValue?: FieldType[Typ];
+    placeholder?: string;
+    validator?: (val?: FieldType[Typ]) => null | string; // null for valid, string for invalid and helper text
+};
 
-export function FormDialog({
+type Base = {
+    [key: string]: keyof FieldType;
+};
+
+type FormFields<T extends Base> = {
+    [K in keyof T]: FieldDeclaration<T[K]>;
+};
+
+type FormValue<T extends Base> = {
+    [K in keyof T]?: FieldType[T[K]];
+};
+
+type FormDialogProps<T extends Base> = {
+    title: string;
+    onClose: () => void;
+    isOpen: boolean;
+    fields: FormFields<T>;
+    onSubmit: (data: FormValue<T>) => Promise<void>;
+    onComplete?: () => void;
+    externalError?: { field: string; message: string }[]; // 外部错误(例如api响应：上传失败)
+    // TODO: consider removing `externalError`
+
+    children?: React.ReactNode;
+};
+
+export function FormDialog<T extends Base>({
     title,
     onClose,
     isOpen,
@@ -125,150 +144,154 @@ export function FormDialog({
     onComplete,
     externalError,
     children,
-}: FormDialogProps) {
-    const [formData, setFormData] = useState<Record<string, any>>(() => {
-        return fields.reduce((acc, field) => ({
-            ...acc,
-            [field.name]: field.defaultValue || ''
-        }), {})
-    })
-    const [errors, setErrors] = useState<{ field: string, message: string }[]>([])
+}: FormDialogProps<T>) {
+    const [formData, setFormData] = useState<FormValue<T>>(() => {
+        const val: FormValue<T> = {};
+        for (const item in fields) {
+            val[item] = fields[item].defaultValue;
+        }
+        return val;
+    });
+    const [errors, setErrors] = useState<{ field: string; message: string }[]>(
+        [],
+    );
     const [disabled, setDisabled] = useState(false);
 
     // 监听 fields 的变化，更新 formData
     useEffect(() => {
-        const newFormData = fields.reduce((acc, field) => ({
-            ...acc,
-            [field.name]: field.defaultValue || ''
-        }), {})
-        setFormData(newFormData)
-    }, [fields])
+        const val: FormValue<T> = {};
+        for (const item in fields) {
+            val[item] = fields[item].defaultValue;
+        }
+        setFormData(val);
+    }, [fields]);
 
-    const checkValidation = (field: Field) => {
-        if (field.required && !formData[field.name]) {
-            setErrors([{
-                field: field.name,
-                message: '这个字段是必须的'
-            }])
-            return false
-        }
-        if (field.validation) {
-            if (!field.validation.pattern.test(formData[field.name])) {
-                setErrors([{
-                    field: field.name,
-                    message: field.validation.error
-                }])
-                return false
+    const validate = () => {
+        for (const key in fields) {
+            if (fields[key].validator === undefined) {
+                continue;
             }
+
+            const result = fields[key].validator(formData[key]);
+
+            if (result === null) {
+                continue;
+            }
+
+            setErrors([
+                {
+                    field: key,
+                    message: result,
+                },
+            ]);
+            return false;
         }
-        setErrors(errors.filter(error => error.field !== field.name))
-        return true
-    }
+        return true;
+    };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, type } = e.target
+        const { name, type } = e.target;
 
         switch (type) {
             case 'file': {
-                const file = e.target.files?.[0]
+                const file = e.target.files?.[0];
                 setFormData({
                     ...formData,
-                    [name]: file
-                })
-                break
+                    [name]: file,
+                });
+                break;
             }
             case 'text': {
-                const { value } = e.target
+                const { value } = e.target;
                 setFormData({
                     ...formData,
-                    [name]: value
-                })
-                break
+                    [name]: value,
+                });
+                break;
             }
             default: {
-                break
+                break;
             }
         }
-    }
+    };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault()
-        const canSubmit = fields.map(checkValidation).filter(bool => !bool).length === 0
-        if (!canSubmit) return
+        e.preventDefault();
+        if (!validate()) return;
         setDisabled(true);
-        await onSubmit(formData)
+        await onSubmit(formData);
         setDisabled(false);
         if (externalError && externalError.length > 0) {
-            setErrors(externalError)
-            return
+            setErrors(externalError);
+            return;
         }
         onComplete?.();
-        setFormData({})
-        setErrors([])
-        onClose()
-    }
+        setFormData({});
+        setErrors([]);
+        onClose();
+    };
     const handleClose = () => {
-        onClose()
-        setFormData({})
-        setErrors([])
-    }
+        onClose();
+        setFormData({});
+        setErrors([]);
+    };
 
     return (
-        <Dialog
-            open={isOpen}
-            onClose={handleClose}
-            maxWidth="sm"
-            fullWidth
-        >
+        <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <form onSubmit={handleSubmit}>
                 <DialogTitle>{title}</DialogTitle>
 
                 <DialogContent>
                     <Stack spacing={3} sx={{ mt: 2 }}>
-                        {fields.map((field) => {
+                        {Object.keys(fields).map((x) => {
+                            const name = x as keyof T;
+                            const field = fields[name];
+
                             switch (field.type) {
-                                case 'image':
+                                case 'file':
                                     return (
-                                        <div key={field.name}>
+                                        <div key={x}>
                                             <input
                                                 type="file"
                                                 readOnly={disabled}
-                                                name={field.name}
+                                                name={x}
                                                 onChange={handleChange}
                                                 required={field.required}
                                                 style={{ display: 'none' }}
-                                                id={`file-${field.name}`}
+                                                id={`file-${x}`}
                                                 accept="image/*"
                                             />
-                                            <label htmlFor={`file-${field.name}`}>
+                                            <label htmlFor={`file-${x}`}>
                                                 <Button
                                                     disabled={disabled}
                                                     variant="outlined"
                                                     component="span"
                                                     fullWidth
                                                 >
-                                                    {formData[field.name] ? formData[field.name].name : '选择图片'}
+                                                    {formData[
+                                                        name
+                                                    ]?.toString() ?? '选择图片'}
                                                 </Button>
                                             </label>
                                         </div>
-                                    )
+                                    );
                                 case 'text':
                                     return (
                                         <TextField
-                                            key={field.name}
-                                            type={field.type}
-                                            name={field.name}
+                                            key={x}
+                                            type="text"
+                                            name={x}
                                             label={field.label}
-                                            value={formData[field.name] || ''}
+                                            value={formData[name] || ''}
                                             disabled={disabled}
                                             onChange={handleChange}
                                             placeholder={field.placeholder}
                                             required={field.required}
                                             fullWidth
                                         />
-                                    )
+                                    );
                                 default:
-                                    return null
+                                    return null;
                             }
                         })}
                         {children}
@@ -276,10 +299,7 @@ export function FormDialog({
                 </DialogContent>
 
                 <DialogActions>
-                    <Button
-                        disabled={disabled}
-                        onClick={handleClose}
-                    >
+                    <Button disabled={disabled} onClick={handleClose}>
                         取消
                     </Button>
                     <Button
@@ -291,13 +311,12 @@ export function FormDialog({
                     </Button>
                 </DialogActions>
             </form>
-            {errors && (
+            {errors &&
                 errors.map((error) => (
                     <Alert key={error.field} severity="error" sx={{ mt: 2 }}>
                         {error.message}
                     </Alert>
-                ))
-            )}
+                ))}
         </Dialog>
-    )
+    );
 }
