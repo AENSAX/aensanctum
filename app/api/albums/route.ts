@@ -2,11 +2,12 @@ import { NextResponse } from 'next/server'
 import { getSessionUser } from '@/lib/session/getSession'
 import { z } from 'zod'
 import prisma from '@/lib/db'
+import { checkAuth } from '@/lib/auth'
 
 // 获取所有图集
 export async function GET() {
-  const session = await getSessionUser()
-  if (!session) {
+  const authId = await checkAuth()
+  if (authId === -1) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
@@ -18,7 +19,7 @@ export async function GET() {
     where: {
       OR: [
         { isPrivate: false, pictures: { some: {} }},
-        { ownerId: session.id }
+        { ownerId: authId }
       ]
     },
     select: {
@@ -61,8 +62,8 @@ export async function POST(request: Request) {
       required_error: "缺少可见性信息"
     })
   })
-  const session = await getSessionUser()
-  if (!session) {
+  const authId = await checkAuth()
+  if (authId === -1) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
@@ -86,7 +87,7 @@ export async function POST(request: Request) {
       name,
       tags,
       isPrivate,
-      ownerId: session.id
+      ownerId: authId
     }
   })
   return NextResponse.json({

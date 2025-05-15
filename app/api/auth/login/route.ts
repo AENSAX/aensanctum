@@ -5,7 +5,6 @@ import { getSessionUser } from '@/lib/session/getSession';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { is } from 'date-fns/locale';
 
 export async function POST(request: Request) {
   const schema = z.object({
@@ -24,7 +23,7 @@ export async function POST(request: Request) {
   }
   const { email, password } = result.data;
   const user = await prisma.user.findUnique({
-    where: { email }
+    where: { email },
   });
   if (!user) {
     return NextResponse.json({
@@ -51,7 +50,14 @@ export async function POST(request: Request) {
       }]
     }, { status: 401 });
   }
-
+  if (!user.isActive) {
+    return NextResponse.json({
+      errors: [{
+        field: 'user',
+        message: '账户封禁中'
+      }]
+    }, { status: 401 });
+  }
   const res = new Response();
   const session = await getIronSession<SessionUser>(request, res, sessionOptions);
 
@@ -77,9 +83,28 @@ export async function GET() {
   if (!session) {
     return NextResponse.json({ status: 401 });
   }
+  const user = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: {
+      isAdmin: true,
+      isActive: true,
+      name: true
+    }
+  });
+  if (!user) {
+    return NextResponse.json(
+      {
+        errors: [{
+          field: 'user',
+          message: '用户不存在'
+        }]
+      }, { status: 401 });
+  }
   return NextResponse.json({
     id: session.id,
     email: session.email,
-    name: session.name,
+    name: user.name,
+    isAdmin: user.isAdmin,
+    isActive: user.isActive
   }, { status: 200 });
 } 

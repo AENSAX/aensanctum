@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getSessionUser } from '@/lib/session/getSession'
 import prisma from '@/lib/db'
-
+import { checkAuth } from '@/lib/auth'
 // 获取某个图集
 export async function GET(request: Request,
   { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await getSessionUser()
-  if (!session) {
+  const authId = await checkAuth()
+  if (authId === -1) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
@@ -43,7 +42,7 @@ export async function GET(request: Request,
       }]
     }, { status: 404 })
   }
-  const isOwner = album.ownerId === session.id
+  const isOwner = album.ownerId === authId
   if (album.isPrivate && !isOwner) {
     return NextResponse.json({
       errors: [{

@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
-import { getSessionUser } from '@/lib/session/getSession'
 import prisma from '@/lib/db'
+import { checkAuth } from '@/lib/auth'
 
 // 从图集中删除图片
 export async function DELETE(request: Request, { params }: { params: Promise<{ albumId: string; id: string }> }) {
-  const session = await getSessionUser()
-  if (!session) {
+  const authId = await checkAuth()
+  if (authId === -1) {
     return NextResponse.json(
       {
         errors: [{
           field: 'session',
-          message: '请先登录'
+          message: '未授权'
         }]
       },
       { status: 401 })
@@ -19,7 +19,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ a
   const album = await prisma.album.findFirst({
     where: {
       id: parseInt(albumId),
-      ownerId: session.id
+      ownerId: authId
     }
   })
 

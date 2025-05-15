@@ -3,11 +3,9 @@ import { getSessionUser } from '@/lib/session/getSession';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { v4 as uuidv4 } from 'uuid';
 import sharp from 'sharp';
 import { Readable } from 'stream';
-import path from 'path';
-import fs from 'fs/promises';
+import { checkAuth } from '@/lib/auth';
 
 //删除我的图集
 export async function DELETE(request: Request, { params }: { params: Promise<{ albumId: string }> }) {
@@ -47,9 +45,15 @@ export async function PUT(
       required_error: "缺少可见性信息"
     })
   })
-  const session = await getSessionUser();
-  if (!session) {
-    return NextResponse.json({ status: 401 });
+  const authId = await checkAuth();
+  if (authId === -1) {
+    return NextResponse.json(
+      {
+        errors: [{
+          field: 'unauthorized',
+          message: '未授权'
+        }]
+      }, { status: 401 });
   }
   const { albumId } = await params
   const result = schema.safeParse(await request.json());
@@ -66,7 +70,7 @@ export async function PUT(
   const currentAlbum = await prisma.album.findUnique({
     where: {
       id: parseInt(albumId),
-      ownerId: session.id
+      ownerId: authId
     }
   });
   if (!currentAlbum) {
@@ -80,7 +84,7 @@ export async function PUT(
   await prisma.album.update({
     where: {
       id: parseInt(albumId),
-      ownerId: session.id
+      ownerId: authId
     },
     data: updatedData
   });
@@ -155,8 +159,8 @@ export async function POST(
   { params }: { params: Promise<{ albumId: string }> }
 ) {
   const { albumId } = await params;
-  const session = await getSessionUser();
-  if (!session) {
+  const authId = await checkAuth();
+  if (authId === -1) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
@@ -168,7 +172,7 @@ export async function POST(
   const album = await prisma.album.findFirst({
     where: {
       id: parseInt(albumId),
-      ownerId: session.id
+      ownerId: authId
     }
   });
 

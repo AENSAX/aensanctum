@@ -5,7 +5,7 @@ import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
-
+import { checkAuth } from '@/lib/auth';
 const s3 = new S3Client({
   region: 'auto',
   endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
@@ -26,8 +26,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ albumId: string }> }
 ) {
-  const session = await getSessionUser();
-  if (!session) {
+  const authId = await checkAuth();
+  if (authId === -1) {
     return NextResponse.json({
       errors: [{
         field: 'unauthorized',
@@ -40,7 +40,7 @@ export async function POST(
   const album = await prisma.album.findFirst({
     where: {
       id: parseInt(albumId),
-      ownerId: session.id
+      ownerId: authId
     }
   });
 

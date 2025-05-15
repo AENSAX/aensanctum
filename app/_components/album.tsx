@@ -554,7 +554,6 @@ interface EditAlbumProps {
 export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumProps) {
     const [isPrivate, setIsPrivate] = useState(album.isPrivate)
     const [showPrivacyConfirm, setShowPrivacyConfirm] = useState(false)
-    const [responseError, setResponseError] = useState<{ field: string, message: string }[]>([])
 
     // 处理隐私设置变更
     const handlePrivacyChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -586,7 +585,7 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
         })
         if (!response.ok) {
             const result = await response.json()
-            setResponseError(result.errors)
+            throw result
         }
         if (onSuccess) {
             mutate(`/api/albums/${album.id}`)
@@ -632,7 +631,6 @@ export function EditAlbumInfo({ isOpen, onClose, album, onSuccess }: EditAlbumPr
                 onClose={onClose}
                 fields={albumFields}
                 onSubmit={handleSubmit}
-                externalError={responseError}
                 onComplete={onSuccess}
             >
                 <FormControlLabel

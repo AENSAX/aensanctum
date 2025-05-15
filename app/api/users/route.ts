@@ -3,27 +3,6 @@ import { z } from 'zod'
 import prisma from '@/lib/db'
 import bcrypt from 'bcrypt'
 
-export async function GET() {
-  try {
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-      }
-    })
-    return NextResponse.json(users)
-  } catch (error) {
-    return NextResponse.json({
-      error: {
-        message: '获取用户列表失败',
-        code: 'USER_LIST_ERROR'
-      }
-    }, { status: 500 })
-  }
-}
-
 export async function POST(request: Request) {
   const schema = z.object({
     email: z.string().email("邮箱格式不正确"),

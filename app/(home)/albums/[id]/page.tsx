@@ -20,7 +20,6 @@ export default function AlbumPage() {
     const [editDialogOpen, setEditDialogOpen] = useState(false)
     const [editPicturesDialogOpen, setEditPicturesDialogOpen] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
-    const [deleteDialogExternalError, setDeleteDialogExternalError] = useState<{ field: string, message: string }[]>([])
 
     const router = useRouter()
     if (albumLoading || userLoading) {
@@ -74,9 +73,7 @@ export default function AlbumPage() {
 
         if (!response.ok) {
             const result = await response.json()
-            setDeleteDialogExternalError(result.errors)
-            setIsDeleting(false)
-            return
+            throw result
         }
 
         router.push('/me')
@@ -117,7 +114,6 @@ export default function AlbumPage() {
                 onClose={() => !isDeleting && setDeleteDialogOpen(false)}
                 title="确认删除"
                 content="确定要删除这个图集吗？此操作无法撤销。"
-                externalError={deleteDialogExternalError}
                 primaryButton={{
                     text: '删除',
                     onClick: handleDeleteAlbum,

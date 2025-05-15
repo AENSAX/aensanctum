@@ -12,6 +12,10 @@ export const useUser = () => {
     const { data: user, error: userErrors, isLoading: userLoading } = useSWR<User>('/api/auth/login', fetcher)
     return { user, userErrors, userLoading }
 }
+export const useUsers = () => {
+    const { data: users, error: usersErrors, isLoading: usersLoading } = useSWR<User[]>('/api/admin/users', fetcher)
+    return { users, usersErrors, usersLoading }
+}
 
 export const useAlbums = () => {
     const { data: albums, error: albumsErrors, isLoading: albumsLoading } = useSWR<Album[]>('/api/albums', fetcher)

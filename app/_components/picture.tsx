@@ -69,13 +69,13 @@ function ImagePreview({ open, onClose, image }: ImagePreviewProps) {
                     justifyContent: 'center'
                 }}>
                     <Image
+                        unoptimized
                         src={image.url}
                         alt={`图片${image.id}`}
                         fill
                         style={{
                             objectFit: 'contain'
                         }}
-                        quality={100}
                         priority
                     />
                 </Box>
@@ -91,7 +91,6 @@ export function PicturesGrid({ pictures, albumId }: { pictures: Picture[], album
     const { user, userErrors, userLoading } = useUser()
     const [deletePictureConfirm, setDeletePictureConfirm] = useState(false)
     const [pictureDeleting, setPictureDeleting] = useState(false)
-    const [deleteErrors, setDeleteErrors] = useState<{ field: string, message: string }[]>([])
 
     if (albumLoading || userLoading) {
         return (
@@ -145,9 +144,8 @@ export function PicturesGrid({ pictures, albumId }: { pictures: Picture[], album
         })
         if (!res.ok) {
             const result = await res.json()
-            setDeleteErrors(result.errors)
             setPictureDeleting(false)
-            return
+            throw result
         }
         setPictureDeleting(false)
         setDeletePictureConfirm(false)
@@ -241,7 +239,6 @@ export function PicturesGrid({ pictures, albumId }: { pictures: Picture[], album
                 <ConfirmDialog
                     isOpen={deletePictureConfirm}
                     onClose={() => setDeletePictureConfirm(false)}
-                    externalError={deleteErrors}
                     title="删除图片"
                     content="确定要删除这张图片吗？"
                     primaryButton={{

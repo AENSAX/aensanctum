@@ -17,7 +17,6 @@ interface ConfirmProps {
     content: string
     primaryButton?: ButtonProps
     secondaryButton?: ButtonProps
-    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
 }
 
 export function ConfirmDialog({
@@ -27,7 +26,6 @@ export function ConfirmDialog({
     content,
     primaryButton,
     secondaryButton,
-    externalError
 }: ConfirmProps) {
 
     if (!primaryButton && !secondaryButton) {
@@ -35,15 +33,17 @@ export function ConfirmDialog({
     }
     const [errors, setErrors] = useState<{ field: string, message: string }[]>([])
     const handlePrimaryButtonClick = async () => {
-        await primaryButton?.onClick()
-        if (externalError) {
-            setErrors(externalError)
+        try {
+            await primaryButton?.onClick()
+        } catch (error: any) {
+            await setErrors(Array.isArray(error) ? error : error.errors || [])
         }
     }
     const handleSecondaryButtonClick = async () => {
-        await secondaryButton?.onClick()
-        if (externalError) {
-            setErrors(externalError)
+        try {
+            await secondaryButton?.onClick()
+        } catch (error: any) {
+            await setErrors(Array.isArray(error) ? error : error.errors || [])
         }
     }
     return (
@@ -112,7 +112,6 @@ interface FormDialogProps {
     fields: Field[]
     onSubmit: (data: any) => Promise<void>,
     onComplete?: () => void,
-    externalError?: { field: string, message: string }[] // 外部错误(例如api响应：上传失败)
     children?: React.ReactNode
 }
 
@@ -123,7 +122,6 @@ export function FormDialog({
     fields,
     onSubmit,
     onComplete,
-    externalError,
     children,
 }: FormDialogProps) {
     const [formData, setFormData] = useState<Record<string, any>>(() => {
@@ -193,26 +191,24 @@ export function FormDialog({
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
-        const canSubmit = fields.map(checkValidation).filter(bool => !bool).length === 0
-        if (!canSubmit) return
-        setDisabled(true);
-        await onSubmit(formData)
-        setDisabled(false);
-        if (externalError && externalError.length > 0) {
-            setErrors(externalError)
-            return
+        try {
+            const canSubmit = fields.map(checkValidation).filter(bool => !bool).length === 0
+            if (!canSubmit) return
+            setDisabled(true)
+            await onSubmit(formData)
+            setDisabled(false)
+            onComplete?.()
+            handleClose()
+        } catch (error: any) {
+            await setErrors(Array.isArray(error) ? error : error.errors || [])
+            setDisabled(false)
         }
-        onComplete?.();
-        setFormData({})
-        setErrors([])
-        onClose()
     }
     const handleClose = () => {
         onClose()
         setFormData({})
         setErrors([])
     }
-
     return (
         <Dialog
             open={isOpen}

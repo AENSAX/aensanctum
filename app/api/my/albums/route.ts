@@ -1,16 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getSessionUser } from '@/lib/session/getSession';
+import { checkAuth } from '@/lib/auth';
 import prisma from '@/lib/db';
 
 // 获取用户所有图集
 export async function GET() {
-    const session = await getSessionUser();
-    if (!session) {
-        return NextResponse.json({ status: 401 })
+    const authId = await checkAuth();
+    if (authId === -1) {
+        return NextResponse.json(
+            {
+                errors: [{
+                    field: 'unauthorized',
+                    message: '未授权'
+                }]
+            }, { status: 401 });
     }
     const albums = await prisma.album.findMany({
         where: {
-            ownerId: session.id
+            ownerId: authId
         },
         select: {
             id: true,

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { UserInfoCard } from '@/app/_components/user'
 import { useUser } from '@/lib/fetcher/fetchers'
 import { useMyAlbums } from '@/lib/fetcher/fetchers'
+import Link from 'next/link'
 
 interface TabPanelProps {
   children?: React.ReactNode
@@ -35,7 +36,6 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function MePage() {
-  const router = useRouter()
   const { user, userLoading } = useUser()
   const { albums, albumsErrors, albumsLoading } = useMyAlbums()
   const [tabValue, setTabValue] = useState(0)
@@ -48,7 +48,19 @@ export default function MePage() {
     )
   }
   if (!user) {
-    return <Typography align="center">请先登录</Typography>
+    return (
+      <Box sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      }}>
+        <Typography align="center">请先登录</Typography>
+
+        <Link href="/login">
+          <Typography sx={{ mt: 2, color: 'primary.main' }} variant="h6">登录</Typography>
+        </Link>
+      </Box>
+    )
   }
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number): void => {
@@ -83,7 +95,7 @@ export default function MePage() {
             <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
               <CircularProgress />
             </Box>
-          ) : albumsErrors? (
+          ) : albumsErrors ? (
             <Box sx={{ textAlign: 'center', mt: 4 }}>
               <Typography color="error">{albumsErrors.message}</Typography>
             </Box>

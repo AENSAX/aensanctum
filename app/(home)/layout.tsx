@@ -87,7 +87,6 @@ export default function HomeLayout({
     }
   ]
 
-  const [albumSubmitResponseError, setAlbumSubmitResponseError] = useState<{ field: string, message: string }[]>([])
   async function handleNewAlbumSubmit(data: any) {
     const response = await fetch('/api/albums', {
       method: 'POST',
@@ -99,7 +98,7 @@ export default function HomeLayout({
     })
     if (!response.ok) {
       const result = await response.json()
-      await setAlbumSubmitResponseError(result.errors)
+      throw result
     }
     else {
       setCreateAlbumDialogOpen(false)
@@ -135,7 +134,6 @@ export default function HomeLayout({
         fields={newAlbumFields}
         onSubmit={handleNewAlbumSubmit}
         onComplete={() => {mutate('/api/albums');mutate('/api/my/albums')}}
-        externalError={albumSubmitResponseError}
       />
     </Box>
   )

@@ -30,6 +30,9 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    createdAt: string;
+    isAdmin: boolean;
+    isActive: boolean;
 }
 
 
