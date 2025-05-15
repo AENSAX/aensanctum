@@ -520,7 +520,10 @@ export function EditAlbumPictures({
                     })
                     .catch((err) => {
                         setUploadError([
-                            { field: 'upload', message: '上传文件失败: ' + err },
+                            {
+                                field: 'upload',
+                                message: '上传文件失败: ' + err,
+                            },
                         ]);
                         setProgress((val) => [
                             ...val.slice(0, i),
