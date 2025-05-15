@@ -12,7 +12,7 @@ import {
     FormControlLabel,
     Alert,
 } from '@mui/material';
-import { User } from '@/lib/interfaces/interfaces'
+import { User, ErrorResponse } from '@/lib/interfaces/interfaces';
 
 interface EditDialogProps {
     open: boolean;
@@ -21,11 +21,18 @@ interface EditDialogProps {
     onSave: (userData: Partial<User>) => Promise<void>;
 }
 
-export function EditUserDialog({ open, onClose, user, onSave }: EditDialogProps) {
+export function EditUserDialog({
+    open,
+    onClose,
+    user,
+    onSave,
+}: EditDialogProps) {
     const [name, setName] = useState(user?.name || '');
     const [isAdmin, setIsAdmin] = useState(user?.isAdmin || false);
     const [isActive, setIsActive] = useState(user?.isActive || false);
-    const [errors, setErrors] = useState<{ field: string, message: string }[]>([]);
+    const [errors, setErrors] = useState<{ field: string; message: string }[]>(
+        [],
+    );
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -45,8 +52,10 @@ export function EditUserDialog({ open, onClose, user, onSave }: EditDialogProps)
                 isActive,
             });
             onClose();
-        } catch (err: any) {
-            setErrors(err.errors);
+        } catch (err: unknown) {
+            if (err instanceof ErrorResponse) {
+                setErrors(err.errors);
+            }
         } finally {
             setLoading(false);
         }
@@ -54,7 +63,7 @@ export function EditUserDialog({ open, onClose, user, onSave }: EditDialogProps)
     const handleClose = () => {
         setErrors([]);
         onClose();
-    }
+    };
 
     return (
         <Dialog open={open} onClose={handleClose}>
@@ -90,17 +99,20 @@ export function EditUserDialog({ open, onClose, user, onSave }: EditDialogProps)
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleClose}>取消</Button>
-                <Button onClick={handleSave} variant="contained" disabled={loading}>
+                <Button
+                    onClick={handleSave}
+                    variant="contained"
+                    disabled={loading}
+                >
                     保存
                 </Button>
             </DialogActions>
-            {errors && (
+            {errors &&
                 errors.map((error) => (
                     <Alert key={error.field} severity="error" sx={{ mt: 2 }}>
                         {error.message}
                     </Alert>
-                ))
-            )}
+                ))}
         </Dialog>
     );
 }
