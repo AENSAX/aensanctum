@@ -25,6 +25,9 @@ import { useState, useRef } from 'react';
 import { mutate } from 'swr';
 import { ConfirmDialog, FormDialog } from './dialog';
 import { useAlbum } from '@/lib/fetcher/fetchers';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
+import _ from 'lodash';
 import Link from 'next/link';
 import React from 'react';
 
@@ -359,16 +362,22 @@ interface EditAlbumPicturesProps {
     albumId: string;
 }
 
+type Progress = {
+    status: 'pending' | 'waiting-presign' | 'uploading' | 'done' | 'error';
+    progress: number;
+};
+
 export function EditAlbumPictures({
     isOpen,
     onClose,
     albumId,
 }: EditAlbumPicturesProps) {
-    const [isUploading, setIsUploading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<
         { field: string; message: string }[]
     >([]);
     const [pictureList, setPictureList] = useState<File[]>([]);
+    const [progress, setProgress] = useState<Progress[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // 处理文件选择
@@ -395,17 +404,38 @@ export function EditAlbumPictures({
 
         setPictureList(Array.from(files));
         setUploadError([]);
+        setProgress(
+            _.times(files.length, () => ({
+                status: 'pending',
+                progress: 0,
+            })),
+        );
     };
 
     const handleUpload = async () => {
         if (pictureList.length === 0) return;
-        setIsUploading(true);
+        setUploading(true);
         setUploadError([]);
+        setProgress(
+            _.times(pictureList.length, () => ({
+                status: 'pending',
+                progress: 0,
+            })),
+        );
 
         try {
             const uploadedUrls: string[] = [];
 
-            for (const file of pictureList) {
+            for (let i = 0; i < pictureList.length; ++i) {
+                const file = pictureList[i];
+                setProgress((val) => [
+                    ...val.slice(0, i),
+                    {
+                        status: 'waiting-presign',
+                        progress: 0,
+                    },
+                    ...val.slice(i + 1),
+                ]);
                 const presignedResponse = await fetch(
                     `/api/my/albums/${albumId}/presigned`,
                     {
@@ -422,30 +452,85 @@ export function EditAlbumPictures({
                 if (!presignedResponse.ok) {
                     const reseult = await presignedResponse.json();
                     setUploadError(reseult.errors);
-                    return;
-                }
-
-                const { presignedUrl, publicUrl } =
-                    await presignedResponse.json();
-
-                const uploadResponse = await fetch(presignedUrl, {
-                    method: 'PUT',
-                    body: file,
-                    headers: {
-                        'Content-Type': file.type,
-                    },
-                    mode: 'cors',
-                    credentials: 'omit',
-                });
-
-                if (!uploadResponse.ok) {
-                    setUploadError([
-                        { field: 'upload', message: '上传文件失败' },
+                    setProgress((val) => [
+                        ...val.slice(0, i),
+                        {
+                            status: 'error',
+                            progress: 0,
+                        },
+                        ...val.slice(i + 1),
                     ]);
                     return;
                 }
 
-                uploadedUrls.push(publicUrl);
+                setProgress((val) => [
+                    ...val.slice(0, i),
+                    {
+                        status: 'uploading',
+                        progress: 0,
+                    },
+                    ...val.slice(i + 1),
+                ]);
+
+                const { presignedUrl, publicUrl } =
+                    await presignedResponse.json();
+
+                const xhr = new XMLHttpRequest();
+                await new Promise((resolve, reject) => {
+                    xhr.upload.onprogress = (event) => {
+                        if (event.lengthComputable) {
+                            setProgress((val) => [
+                                ...val.slice(0, i),
+                                {
+                                    status: 'uploading',
+                                    progress:
+                                        (100 * event.loaded) / event.total,
+                                },
+                                ...val.slice(i + 1),
+                            ]);
+                        }
+                    };
+                    xhr.onreadystatechange = () => {
+                        if (xhr.readyState === XMLHttpRequest.DONE) {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                resolve(xhr.status);
+                            } else {
+                                reject(xhr.status);
+                            }
+                        }
+                    };
+
+                    xhr.onerror = () => {
+                        reject(xhr.status);
+                    };
+                    xhr.open('PUT', presignedUrl, true);
+                    xhr.setRequestHeader('Content-Type', file.type);
+                    xhr.send(file);
+                })
+                    .then(() => {
+                        uploadedUrls.push(publicUrl);
+                        setProgress((val) => [
+                            ...val.slice(0, i),
+                            {
+                                status: 'done',
+                                progress: 100,
+                            },
+                            ...val.slice(i + 1),
+                        ]);
+                    })
+                    .catch((err) => {
+                        setUploadError([
+                            { field: 'upload', message: '上传文件失败: ' + err },
+                        ]);
+                        setProgress((val) => [
+                            ...val.slice(0, i),
+                            {
+                                status: 'error',
+                                progress: 0,
+                            },
+                            ...val.slice(i + 1),
+                        ]);
+                    });
             }
 
             const saveResponse = await fetch(`/api/my/albums/${albumId}`, {
@@ -476,7 +561,7 @@ export function EditAlbumPictures({
                 },
             ]);
         } finally {
-            setIsUploading(false);
+            setUploading(false);
         }
     };
     const handleClose = () => {
@@ -489,15 +574,7 @@ export function EditAlbumPictures({
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogTitle>添加图片</DialogTitle>
             <DialogContent>
-                <Box
-                    sx={{
-                        mt: 2,
-                        mb: 2,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 2,
-                    }}
-                >
+                <Box className="flex flex-col">
                     <input
                         type="file"
                         accept="image/*"
@@ -507,85 +584,89 @@ export function EditAlbumPictures({
                         ref={fileInputRef}
                     />
 
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            gap: 2,
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexWrap: 'wrap',
-                        }}
-                    >
-                        <Button
-                            variant="contained"
-                            component="label"
-                            disabled={isUploading}
-                            startIcon={<AddPhotoAlternateIcon />}
-                            onClick={() => fileInputRef.current?.click()}
-                            sx={{
-                                minWidth: 120,
-                                height: 45,
-                                bgcolor: 'primary.main',
-                                '&:hover': {
-                                    bgcolor: 'primary.dark',
-                                },
-                            }}
-                        >
-                            选择图片
-                        </Button>
-                        <Button
-                            variant="contained"
-                            onClick={handleUpload}
-                            disabled={isUploading || pictureList.length === 0}
-                            sx={{
-                                minWidth: 120,
-                                height: 45,
-                                bgcolor: 'primary.main',
-                                '&:hover': {
-                                    bgcolor: 'primary.dark',
-                                },
-                            }}
-                        >
-                            {isUploading ? '上传中...' : '上传'}
-                        </Button>
-                    </Box>
-
                     {pictureList.length > 0 && (
-                        <Box
-                            sx={{
-                                mt: 2,
-                                p: 2,
-                                borderRadius: 1,
-                                bgcolor: 'grey.50',
-                                maxHeight: '200px',
-                                overflowY: 'auto',
-                            }}
-                        >
+                        <Box sx={{ maxHeight: '200px' }}>
                             <Typography
                                 variant="subtitle2"
                                 sx={{ mb: 1, color: 'text.secondary' }}
                             >
                                 已选择 {pictureList.length} 张图片
                             </Typography>
-                            {pictureList.map((file) => (
-                                <Typography
-                                    key={file.name}
-                                    variant="body2"
+                            {pictureList.map((file, i) => (
+                                <Box
+                                    key={i}
+                                    className="flex flex-row items-center"
                                     sx={{
                                         py: 0.5,
                                         px: 1,
-                                        borderRadius: 0.5,
                                         '&:hover': {
                                             bgcolor: 'grey.100',
                                         },
                                     }}
                                 >
-                                    {file.name}
-                                </Typography>
+                                    <div
+                                        className="flex flex-col justify-center shrink-0"
+                                        style={{ width: 26, height: 26 }}
+                                    >
+                                        {progress.length && (
+                                            <>
+                                                {progress[i].status ==
+                                                    'pending' && <></>}
+                                                {progress[i].status ==
+                                                    'waiting-presign' && (
+                                                    <CircularProgress
+                                                        variant="indeterminate"
+                                                        size={20}
+                                                    />
+                                                )}
+                                                {progress[i].status ==
+                                                    'uploading' && (
+                                                    <CircularProgress
+                                                        variant="determinate"
+                                                        value={
+                                                            progress[i].progress
+                                                        }
+                                                        thickness={10}
+                                                        size={20}
+                                                    />
+                                                )}
+                                                {progress[i].status ==
+                                                    'done' && (
+                                                    <CheckIcon
+                                                        color="success"
+                                                        fontSize="small"
+                                                    />
+                                                )}
+                                                {progress[i].status ==
+                                                    'error' && (
+                                                    <CloseIcon
+                                                        color="error"
+                                                        fontSize="small"
+                                                    />
+                                                )}
+                                            </>
+                                        )}
+                                    </div>
+                                    <Typography
+                                        key={file.name}
+                                        variant="body2"
+                                        sx={{
+                                            display: 'inline-block',
+                                            px: 1,
+                                            m: 0,
+                                            overflowX: 'hidden',
+                                            whiteSpace: 'nowrap',
+                                            textOverflow: 'ellipsis',
+                                        }}
+                                    >
+                                        {file.name}
+                                    </Typography>
+                                </Box>
                             ))}
                         </Box>
                     )}
-                    {isUploading && (
+
+                    {uploading && (
                         <Alert
                             severity="info"
                             sx={{
@@ -611,12 +692,57 @@ export function EditAlbumPictures({
                                 {error.message}
                             </Alert>
                         ))}
+
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            gap: 2,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexWrap: 'wrap',
+                        }}
+                    >
+                        <Button
+                            variant="contained"
+                            component="label"
+                            disabled={uploading}
+                            startIcon={<AddPhotoAlternateIcon />}
+                            onClick={() => fileInputRef.current?.click()}
+                            sx={{
+                                minWidth: 120,
+                                height: 45,
+                                mt: 2,
+                                bgcolor: 'primary.main',
+                                '&:hover': {
+                                    bgcolor: 'primary.dark',
+                                },
+                            }}
+                        >
+                            选择图片
+                        </Button>
+                    </Box>
                 </Box>
             </DialogContent>
             <DialogActions>
                 <Button
+                    variant="contained"
+                    onClick={handleUpload}
+                    loading={uploading}
+                    sx={{
+                        minWidth: 120,
+                        height: 45,
+                        bgcolor: 'primary.main',
+                        '&:hover': {
+                            bgcolor: 'primary.dark',
+                        },
+                    }}
+                >
+                    上传
+                </Button>
+                <Button
                     onClick={handleClose}
                     variant="outlined"
+                    color="secondary"
                     sx={{
                         minWidth: 120,
                         height: 45,
