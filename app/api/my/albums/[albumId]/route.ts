@@ -140,7 +140,7 @@ async function processImage(url: string): Promise<string> {
     const buffer = Buffer.concat(chunks);
 
     const thumbnailBuffer = await sharp(buffer)
-        .resize(300, 300, {
+        .resize(600, 600, {
             fit: 'inside',
             withoutEnlargement: true,
             position: 'centre',
