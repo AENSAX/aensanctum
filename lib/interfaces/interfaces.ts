@@ -4,6 +4,7 @@ export interface Album {
     isPrivate: boolean;
     pictures: Picture[];
 }
+
 export interface AlbumDetail {
     createdAt: string;
     owner: {

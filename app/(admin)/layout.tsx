@@ -6,12 +6,18 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@/lib/fetcher/fetchers';
 import { TopBar } from '@/app/_components/toolbar';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import CollectionsIcon from '@mui/icons-material/Collections';
 
 const topBarTabs = [
     {
         label: '用户管理',
-        value: '/admin',
+        value: '/admin/users',
         icon: <AdminPanelSettingsIcon />,
+    },
+    {
+        label: '图集管理',
+        value: '/admin/albums',
+        icon: <CollectionsIcon />,
     },
 ];
 
