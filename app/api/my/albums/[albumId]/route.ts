@@ -5,6 +5,7 @@ import {
     S3Client,
     PutObjectCommand,
     GetObjectCommand,
+    DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
 import { Readable } from 'stream';
@@ -20,13 +21,79 @@ export async function DELETE(
         return NextResponse.json({ status: 401 });
     }
     const { albumId } = await params;
-    await prisma.album.delete({
+
+    const album = await prisma.album.findUnique({
         where: {
             id: parseInt(albumId),
             ownerId: authId,
         },
+        include: {
+            pictures: {
+                select: {
+                    url: true,
+                    thumbnailUrl: true,
+                },
+            },
+        },
     });
-    return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
+
+    if (!album) {
+        return NextResponse.json(
+            {
+                errors: [{ field: 'not_found', message: '图集不存在' }],
+            },
+            { status: 404 },
+        );
+    }
+
+    const deletePromises: Promise<unknown>[] = [];
+    for (const picture of album.pictures) {
+        const originalFileName = getFileNameFromUrl(picture.url);
+        deletePromises.push(
+            s3.send(
+                new DeleteObjectCommand({
+                    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+                    Key: `images/${originalFileName}`,
+                }),
+            ),
+        );
+
+        const thumbnailFileName = getFileNameFromUrl(picture.thumbnailUrl);
+        deletePromises.push(
+            s3.send(
+                new DeleteObjectCommand({
+                    Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+                    Key: `thumbnails/${thumbnailFileName}`,
+                }),
+            ),
+        );
+    }
+
+    try {
+        await Promise.all(deletePromises);
+
+        await prisma.album.delete({
+            where: {
+                id: parseInt(albumId),
+                ownerId: authId,
+            },
+        });
+
+        return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
+    } catch (error) {
+        console.error('删除图集失败:', error);
+        return NextResponse.json(
+            {
+                errors: [
+                    {
+                        field: 'delete',
+                        message: '删除图集失败，请稍后重试',
+                    },
+                ],
+            },
+            { status: 500 },
+        );
+    }
 }
 
 // 更新我的图集

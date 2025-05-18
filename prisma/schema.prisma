@@ -13,15 +13,16 @@ model User {
   name      String
   password  String
   createdAt DateTime @default(now())
-  albums    Album[]  // 用户创建的图集
+  albums    Album[]
   isAdmin   Boolean  @default(false)
   isActive Boolean @default(true)
+  accessKey String? @unique
 }
 
 model Picture {
   id          Int      @id @default(autoincrement())
   url         String
-  thumbnailUrl String  // 缩略图URL
+  thumbnailUrl String
   album       Album    @relation(fields: [albumId], references: [id], onDelete: Cascade)
   albumId     Int
 }

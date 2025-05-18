@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     }
     const { name, tags, isPrivate } = result.data;
 
-    await prisma.album.create({
+    const album = await prisma.album.create({
         data: {
             name,
             tags,
@@ -114,6 +114,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(
         {
+            id: album.id,
             message: '图集创建成功',
         },
         { status: 200 },
