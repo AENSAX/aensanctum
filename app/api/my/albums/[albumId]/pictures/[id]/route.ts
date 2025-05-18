@@ -1,7 +1,22 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { checkAuth } from '@/lib/auth';
-// 从图集中删除图片
+import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
+
+const s3 = new S3Client({
+    region: 'auto',
+    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+    credentials: {
+        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
+    },
+});
+
+function getFileNameFromUrl(url: string): string {
+    const urlParts = url.split('/');
+    return urlParts[urlParts.length - 1];
+}
+
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ albumId: string; id: string }> },
@@ -47,6 +62,11 @@ export async function DELETE(
             id: parseInt(id),
             albumId: parseInt(albumId),
         },
+        select: {
+            id: true,
+            url: true,
+            thumbnailUrl: true,
+        },
     });
 
     if (!picture) {
@@ -62,6 +82,29 @@ export async function DELETE(
             { status: 404 },
         );
     }
+    const deletePromises: Promise<unknown>[] = [];
+
+    const originalFileName = getFileNameFromUrl(picture.url);
+    deletePromises.push(
+        s3.send(
+            new DeleteObjectCommand({
+                Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+                Key: `images/${originalFileName}`,
+            }),
+        ),
+    );
+
+    const thumbnailFileName = getFileNameFromUrl(picture.thumbnailUrl);
+    deletePromises.push(
+        s3.send(
+            new DeleteObjectCommand({
+                Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
+                Key: `thumbnails/${thumbnailFileName}`,
+            }),
+        ),
+    );
+
+    await Promise.all(deletePromises);
 
     await prisma.picture.delete({
         where: {

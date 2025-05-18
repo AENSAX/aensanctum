@@ -11,7 +11,6 @@ import sharp from 'sharp';
 import { Readable } from 'stream';
 import { checkAuth } from '@/lib/auth';
 
-//删除我的图集
 export async function DELETE(
     request: Request,
     { params }: { params: Promise<{ albumId: string }> },
@@ -68,32 +67,16 @@ export async function DELETE(
             ),
         );
     }
+    await Promise.all(deletePromises);
 
-    try {
-        await Promise.all(deletePromises);
+    await prisma.album.delete({
+        where: {
+            id: parseInt(albumId),
+            ownerId: authId,
+        },
+    });
 
-        await prisma.album.delete({
-            where: {
-                id: parseInt(albumId),
-                ownerId: authId,
-            },
-        });
-
-        return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
-    } catch (error) {
-        console.error('删除图集失败:', error);
-        return NextResponse.json(
-            {
-                errors: [
-                    {
-                        field: 'delete',
-                        message: '删除图集失败，请稍后重试',
-                    },
-                ],
-            },
-            { status: 500 },
-        );
-    }
+    return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
 }
 
 // 更新我的图集

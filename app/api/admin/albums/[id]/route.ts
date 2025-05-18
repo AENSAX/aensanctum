@@ -92,28 +92,11 @@ export async function DELETE(
         );
     }
 
-    try {
-        await Promise.all(deletePromises);
-
-        await prisma.album.delete({
-            where: {
-                id: parseInt(id),
-            },
-        });
-
-        return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
-    } catch (error) {
-        console.error('删除图集失败:', error);
-        return NextResponse.json(
-            {
-                errors: [
-                    {
-                        field: 'delete',
-                        message: '删除图集失败，请稍后重试',
-                    },
-                ],
-            },
-            { status: 500 },
-        );
-    }
+    await Promise.all(deletePromises);
+    await prisma.album.delete({
+        where: {
+            id: parseInt(id),
+        },
+    });
+    return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
 }
