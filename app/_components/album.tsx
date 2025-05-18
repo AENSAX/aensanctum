@@ -31,7 +31,6 @@ import _ from 'lodash';
 import Link from 'next/link';
 import React from 'react';
 
-//图集信息卡片
 interface AlbumDetailCardProps {
     albumId: string;
     onAddPictures: () => void;
@@ -258,6 +257,8 @@ export function AlbumDetailCard({
 
 //图集显示网格
 export function AlbumsGrid({ albums }: { albums: Album[] }) {
+    const shuffledAlbums = _.shuffle([...albums]);
+
     return (
         <Box
             sx={{
@@ -276,7 +277,7 @@ export function AlbumsGrid({ albums }: { albums: Album[] }) {
                 },
             }}
         >
-            {albums.map((album) => (
+            {shuffledAlbums.map((album) => (
                 <Box
                     key={album.id}
                     sx={{
