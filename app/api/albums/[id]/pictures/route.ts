@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { checkAuth } from '@/lib/auth';
 
+//获取图集的图片列表
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> },
@@ -21,29 +22,30 @@ export async function GET(
             { status: 401 },
         );
     }
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
 
-    const album = await prisma.album.findUnique({
+    const pictures = await prisma.album.findUnique({
         where: { id: parseInt(id) },
-        include: {
-            owner: {
-                select: {
-                    id: true,
-                    name: true,
-                },
-            },
+        select: {
+            ownerId: true,
+            isPrivate: true,
             pictures: {
+                select: {
+                    albumId: true,
+                    id: true,
+                    url: true,
+                    thumbnailUrl: true,
+                },
                 orderBy: {
                     id: 'asc',
                 },
-            },
-            _count: {
-                select: {
-                    pictures: true,
-                },
+                skip: (page - 1) * 10,
+                take: 10,
             },
         },
     });
-    if (!album) {
+    if (!pictures) {
         return NextResponse.json(
             {
                 errors: [
@@ -56,8 +58,8 @@ export async function GET(
             { status: 404 },
         );
     }
-    const isOwner = album.ownerId === authId;
-    if (album.isPrivate && !isOwner) {
+    const isOwner = pictures.ownerId === authId;
+    if (pictures.isPrivate && !isOwner) {
         return NextResponse.json(
             {
                 errors: [
@@ -70,9 +72,6 @@ export async function GET(
             { status: 403 },
         );
     }
-    const albumResponse = {
-        ...album,
-        createdAt: album.createdAt.toISOString(),
-    };
-    return NextResponse.json(albumResponse);
+    const picturesResponse = pictures.pictures;
+    return NextResponse.json(picturesResponse);
 }

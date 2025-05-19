@@ -14,6 +14,7 @@ import {
     Typography,
     Chip,
     CircularProgress,
+    Pagination,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import LockResetIcon from '@mui/icons-material/LockReset';
@@ -23,7 +24,6 @@ import { ConfirmDialog } from '@/app/_components/dialog';
 import { EditUserDialog } from '@/app/_components/admin';
 import { useUsers } from '@/lib/fetcher/fetchers';
 import Link from 'next/link';
-import { mutate } from 'swr';
 
 export default function AdminPage() {
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -33,8 +33,18 @@ export default function AdminPage() {
     const [userToResetPassword, setUserToResetPassword] = useState<User | null>(
         null,
     );
+    const [currentPage, setCurrentPage] = useState(1);
+
     const { user: currentUser, userLoading, userErrors } = useUser();
-    const { users: userList, usersErrors, usersLoading } = useUsers();
+    const { paginatedUsers, usersErrors, usersLoading, setSize } = useUsers();
+
+    const handlePageChange = (
+        event: React.ChangeEvent<unknown>,
+        value: number,
+    ) => {
+        setCurrentPage(value);
+        setSize(value);
+    };
 
     if (userLoading || usersLoading) {
         return (
@@ -99,7 +109,11 @@ export default function AdminPage() {
             </Box>
         );
     }
-    if (!userList || userList.length === 0) {
+
+    const currentUsers = paginatedUsers?.[currentPage - 1] || [];
+    const totalPages = currentUsers.length < 10 ? currentPage : currentPage + 1;
+
+    if (!currentUsers || currentUsers.length === 0) {
         return <Typography align="center">暂无用户</Typography>;
     }
 
@@ -117,7 +131,7 @@ export default function AdminPage() {
             const result = await response.json();
             throw result;
         }
-        mutate('/api/admin/users');
+        setSize(currentPage);
         setEditDialogOpen(false);
         setSelectedUser(null);
     };
@@ -152,7 +166,7 @@ export default function AdminPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {userList.map((user) => (
+                        {currentUsers.map((user: User) => (
                             <TableRow key={user.id}>
                                 <TableCell>{user.id}</TableCell>
                                 <TableCell>{user.email}</TableCell>
@@ -212,6 +226,18 @@ export default function AdminPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <Box
+                sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}
+            >
+                <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                />
+            </Box>
 
             <EditUserDialog
                 open={editDialogOpen}

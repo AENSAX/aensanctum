@@ -113,7 +113,7 @@ export function AlbumDetailCard({
                     flexShrink: 0,
                 }}
             >
-                {album.pictures.length > 0 ? (
+                {album._count.pictures > 0 ? (
                     <Image
                         src={album.pictures[0].url}
                         alt={`${album.id}`}
@@ -175,7 +175,7 @@ export function AlbumDetailCard({
                 </Box>
 
                 <Typography variant="body1" sx={{ mb: 2 }}>
-                    {album.pictures.length} 张图片
+                    {album._count.pictures} 张图片
                 </Typography>
 
                 {album?.tags?.length > 0 && (
@@ -257,8 +257,6 @@ export function AlbumDetailCard({
 
 //图集显示网格
 export function AlbumsGrid({ albums }: { albums: Album[] }) {
-    const shuffledAlbums = _.shuffle([...albums]);
-
     return (
         <Box
             sx={{
@@ -277,7 +275,7 @@ export function AlbumsGrid({ albums }: { albums: Album[] }) {
                 },
             }}
         >
-            {shuffledAlbums.map((album) => (
+            {albums.map((album) => (
                 <Box
                     key={album.id}
                     sx={{

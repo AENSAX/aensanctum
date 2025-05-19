@@ -11,7 +11,7 @@ import {
 import Image from 'next/image';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-import { useAlbum, useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetcher/fetchers';
 import { ConfirmDialog } from './dialog';
 import { mutate } from 'swr';
 
@@ -98,12 +98,11 @@ function ImagePreview({ open, onClose, image }: ImagePreviewProps) {
 
 export function PicturesGrid({
     pictures,
-    albumId,
+    canEdit,
 }: {
     pictures: Picture[];
-    albumId: number;
+    canEdit: boolean;
 }) {
-    const { album, albumErrors, albumLoading } = useAlbum(String(albumId));
     const [selectedPicture, setSelectedPicture] = useState<Picture | null>(
         null,
     );
@@ -113,7 +112,7 @@ export function PicturesGrid({
     const [deletePictureConfirm, setDeletePictureConfirm] = useState(false);
     const [pictureDeleting, setPictureDeleting] = useState(false);
 
-    if (albumLoading || userLoading) {
+    if (userLoading) {
         return (
             <Box
                 sx={{
@@ -124,19 +123,6 @@ export function PicturesGrid({
                 }}
             >
                 <CircularProgress />
-            </Box>
-        );
-    }
-    if (albumErrors && albumErrors.length > 0) {
-        return (
-            <Box sx={{ textAlign: 'center', mt: 4 }}>
-                {albumErrors.map(
-                    (error: { field: string; message: string }) => (
-                        <Typography key={error.field} color="error">
-                            {error.message}
-                        </Typography>
-                    ),
-                )}
             </Box>
         );
     }
@@ -154,14 +140,10 @@ export function PicturesGrid({
     if (!user) {
         return <Typography align="center">未登录</Typography>;
     }
-    if (!album) {
-        return <Typography align="center">图集不存在</Typography>;
-    }
 
     if (!pictures || pictures.length === 0) {
         return <Typography align="center">没有图片</Typography>;
     }
-    const canEdit = album.ownerId === user.id;
 
     const handleImageClick = (pic: Picture) => {
         setSelectedPicture(pic);

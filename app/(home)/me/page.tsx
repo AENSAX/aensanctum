@@ -7,12 +7,14 @@ import {
     Tabs,
     Tab,
     CircularProgress,
+    Pagination,
 } from '@mui/material';
 import { AlbumsGrid } from '@/app/_components/album';
 import { useState } from 'react';
 import { UserInfoCard } from '@/app/_components/user';
 import { useUser } from '@/lib/fetcher/fetchers';
 import { useMyAlbums } from '@/lib/fetcher/fetchers';
+import { Album } from '@/lib/interfaces/interfaces';
 import React from 'react';
 
 interface TabPanelProps {
@@ -39,8 +41,26 @@ function TabPanel(props: TabPanelProps) {
 
 export default function MePage() {
     const { user, userLoading } = useUser();
-    const { albums, albumsErrors, albumsLoading } = useMyAlbums();
+    const [currentPage, setCurrentPage] = useState(1);
     const [tabValue, setTabValue] = useState(0);
+
+    const getIndex = (index: number, previousPageData: Album[]) => {
+        if (previousPageData && previousPageData.length === 0) {
+            return null;
+        }
+        return `/api/my/albums?page=${index + 1}`;
+    };
+
+    const { paginatedAlbums, albumsErrors, albumsLoading, setSize } =
+        useMyAlbums(getIndex);
+
+    const handlePageChange = (
+        event: React.ChangeEvent<unknown>,
+        value: number,
+    ) => {
+        setCurrentPage(value);
+        setSize(value);
+    };
 
     if (userLoading) {
         return (
@@ -66,6 +86,10 @@ export default function MePage() {
     ): void => {
         setTabValue(newValue);
     };
+
+    const currentAlbums = paginatedAlbums?.[currentPage - 1] || [];
+    const totalPages =
+        currentAlbums.length < 10 ? currentPage : currentPage + 1;
 
     return (
         <Container maxWidth="xl">
@@ -107,12 +131,30 @@ export default function MePage() {
                                 {albumsErrors.message}
                             </Typography>
                         </Box>
-                    ) : albums?.length === 0 ? (
+                    ) : currentAlbums.length === 0 ? (
                         <Box sx={{ textAlign: 'center', mt: 4 }}>
                             <Typography>你还没有创建任何图集。</Typography>
                         </Box>
                     ) : (
-                        <AlbumsGrid albums={albums || []} />
+                        <>
+                            <AlbumsGrid albums={currentAlbums} />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    mt: 4,
+                                    mb: 2,
+                                }}
+                            >
+                                <Pagination
+                                    count={totalPages}
+                                    page={currentPage}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                    size="large"
+                                />
+                            </Box>
+                        </>
                     )}
                 </TabPanel>
             </Box>

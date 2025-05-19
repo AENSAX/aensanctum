@@ -2,7 +2,7 @@ export interface Album {
     id: number;
     ownerId: number;
     isPrivate: boolean;
-    pictures: Picture[];
+    pictures: Picture[]; //只查询第一张作为封面图
 }
 
 export interface AlbumDetail {
@@ -11,7 +11,10 @@ export interface AlbumDetail {
         name: string;
         id: number;
     };
-    pictures: Picture[];
+    pictures: Picture[]; //只查询第一张作为封面图
+    _count: {
+        pictures: number;
+    };
     name: string;
     id: number;
     description: string;

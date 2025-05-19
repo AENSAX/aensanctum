@@ -5,6 +5,7 @@ import {
     Typography,
     CircularProgress,
     Divider,
+    Pagination,
 } from '@mui/material';
 import { PicturesGrid } from '@/app/_components/picture';
 import { useState } from 'react';
@@ -12,8 +13,9 @@ import { useRouter } from 'next/navigation';
 import { EditAlbumInfo, EditAlbumPictures } from '@/app/_components/album';
 import { ConfirmDialog } from '@/app/_components/dialog';
 import { AlbumDetailCard } from '@/app/_components/album';
-import { useUser, useAlbum } from '@/lib/fetcher/fetchers';
+import { useUser, useAlbum, useAlbumPictures } from '@/lib/fetcher/fetchers';
 import { useParams } from 'next/navigation';
+import { Picture } from '@/lib/interfaces/interfaces';
 
 export default function AlbumPage() {
     const albumId = useParams().id as string;
@@ -24,6 +26,25 @@ export default function AlbumPage() {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editPicturesDialogOpen, setEditPicturesDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const getIndex = (index: number, previousPageData: Picture[]) => {
+        if (previousPageData && previousPageData.length === 0) {
+            return null;
+        }
+        return `/api/albums/${albumId}/pictures?page=${index + 1}`;
+    };
+
+    const { paginatedPictures, picturesErrors, picturesLoading, setSize } =
+        useAlbumPictures(getIndex);
+
+    const handlePageChange = (
+        event: React.ChangeEvent<unknown>,
+        value: number,
+    ) => {
+        setCurrentPage(value);
+        setSize(value);
+    };
 
     const router = useRouter();
     if (albumLoading || userLoading) {
@@ -64,12 +85,26 @@ export default function AlbumPage() {
             </Box>
         );
     }
+    if (picturesErrors && picturesErrors.length > 0) {
+        return (
+            <Box sx={{ textAlign: 'center', mt: 4 }}>
+                {picturesErrors.map(
+                    (error: { field: string; message: string }) => (
+                        <Typography key={error.field} color="error">
+                            {error.message}
+                        </Typography>
+                    ),
+                )}
+            </Box>
+        );
+    }
     if (!album) {
         return <Typography align="center">图集不存在</Typography>;
     }
     if (!user) {
         return <Typography align="center">请先登录</Typography>;
     }
+
     const canEdit = user.id === album.ownerId;
 
     if (album.isPrivate && !canEdit) {
@@ -97,10 +132,14 @@ export default function AlbumPage() {
         setEditDialogOpen(false);
     };
 
+    const currentPictures = paginatedPictures?.[currentPage - 1] || [];
+    const totalPages = album._count.pictures
+        ? Math.ceil(album._count.pictures / 10)
+        : 0;
+
     return (
         <Container maxWidth="lg">
             <Box sx={{ py: 4 }}>
-                {/* 图集信息区域 */}
                 <AlbumDetailCard
                     albumId={albumId}
                     onAddPictures={() => setEditPicturesDialogOpen(true)}
@@ -108,15 +147,45 @@ export default function AlbumPage() {
                     onDelete={() => setDeleteDialogOpen(true)}
                 />
 
-                {/* 分割线 */}
                 <Divider sx={{ my: 4 }} />
 
-                {/* 图片网格 */}
                 <Box>
-                    <PicturesGrid
-                        albumId={album.id}
-                        pictures={album.pictures}
-                    />
+                    {picturesLoading ? (
+                        <Box
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                my: 4,
+                            }}
+                        >
+                            <CircularProgress />
+                        </Box>
+                    ) : currentPictures.length === 0 ? (
+                        <Typography align="center">暂无图片</Typography>
+                    ) : (
+                        <>
+                            <PicturesGrid
+                                canEdit={canEdit}
+                                pictures={currentPictures}
+                            />
+                            <Box
+                                sx={{
+                                    display: 'flex',
+                                    justifyContent: 'center',
+                                    mt: 4,
+                                    mb: 2,
+                                }}
+                            >
+                                <Pagination
+                                    count={totalPages}
+                                    page={currentPage}
+                                    onChange={handlePageChange}
+                                    color="primary"
+                                    size="large"
+                                />
+                            </Box>
+                        </>
+                    )}
                 </Box>
             </Box>
 

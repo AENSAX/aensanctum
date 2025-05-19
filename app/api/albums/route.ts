@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/db';
 import { checkAuth } from '@/lib/auth';
+
 // 获取所有图集
-export async function GET() {
+export async function GET(request: Request) {
     const authId = await checkAuth();
     if (authId === -1) {
         return NextResponse.json(
@@ -18,6 +19,8 @@ export async function GET() {
             { status: 401 },
         );
     }
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
     const albums = await prisma.album.findMany({
         where: {
             OR: [
@@ -39,6 +42,8 @@ export async function GET() {
                 },
             },
         },
+        skip: (page - 1) * 10,
+        take: 10,
         orderBy: {
             id: 'desc',
         },

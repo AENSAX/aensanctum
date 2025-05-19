@@ -1,5 +1,7 @@
-import { User, Album, AlbumDetail } from '../interfaces/interfaces';
+import { User, Album, AlbumDetail, Picture } from '../interfaces/interfaces';
 import useSWR from 'swr';
+import useSWRInfinite from 'swr/infinite';
+
 export const fetcher = async (url: string) => {
     const res = await fetch(url);
     if (!res.ok) {
@@ -18,30 +20,47 @@ export const useUser = () => {
 };
 
 export const useUsers = () => {
+    const getIndex = (index: number, previousPageData: User[]) => {
+        if (previousPageData && previousPageData.length === 0) {
+            return null;
+        }
+        return `/api/admin/users?page=${index + 1}`;
+    };
     const {
-        data: users,
+        data: paginatedUsers,
         error: usersErrors,
         isLoading: usersLoading,
-    } = useSWR<User[]>('/api/admin/users', fetcher);
-    return { users, usersErrors, usersLoading };
+        size,
+        setSize,
+    } = useSWRInfinite<User[]>(getIndex, fetcher);
+    return { paginatedUsers, usersErrors, usersLoading, size, setSize };
 };
 
-export const useAlbums = () => {
+export const useAlbums = (
+    getIndex: (index: number, previousPageData: Album[]) => string | null,
+) => {
     const {
-        data: albums,
+        data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-    } = useSWR<Album[]>('/api/albums', fetcher);
-    return { albums, albumsErrors, albumsLoading };
+        size,
+        setSize,
+    } = useSWRInfinite<Album[]>(getIndex, fetcher);
+
+    return { paginatedAlbums, albumsErrors, albumsLoading, size, setSize };
 };
 
-export const useMyAlbums = () => {
+export const useMyAlbums = (
+    getIndex: (index: number, previousPageData: Album[]) => string | null,
+) => {
     const {
-        data: albums,
+        data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-    } = useSWR<Album[]>(`/api/my/albums`, fetcher);
-    return { albums, albumsErrors, albumsLoading };
+        size,
+        setSize,
+    } = useSWRInfinite<Album[]>(getIndex, fetcher);
+    return { paginatedAlbums, albumsErrors, albumsLoading, size, setSize };
 };
 
 export const useAlbum = (id: string) => {
@@ -51,6 +70,25 @@ export const useAlbum = (id: string) => {
         isLoading: albumLoading,
     } = useSWR<AlbumDetail>(`/api/albums/${id}`, fetcher);
     return { album, albumErrors, albumLoading };
+};
+
+export const useAlbumPictures = (
+    getIndex: (index: number, previousPageData: Picture[]) => string | null,
+) => {
+    const {
+        data: paginatedPictures,
+        error: picturesErrors,
+        isLoading: picturesLoading,
+        size,
+        setSize,
+    } = useSWRInfinite<Picture[]>(getIndex, fetcher);
+    return {
+        paginatedPictures,
+        picturesErrors,
+        picturesLoading,
+        size,
+        setSize,
+    };
 };
 
 export const tagsFormater = (tags: string) => {

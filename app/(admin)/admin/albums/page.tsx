@@ -13,10 +13,11 @@ import {
     Typography,
     CircularProgress,
     IconButton,
+    Pagination,
 } from '@mui/material';
 import { useUser } from '@/lib/fetcher/fetchers';
 import Link from 'next/link';
-import useSWR, { mutate } from 'swr';
+import useSWRInfinite from 'swr/infinite';
 import { fetcher } from '@/lib/fetcher/fetchers';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ConfirmDialog } from '@/app/_components/dialog';
@@ -30,13 +31,32 @@ interface AdminAlbum {
 
 export default function AlbumsAdminPage() {
     const { user: currentUser, userLoading, userErrors } = useUser();
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const getKey = (index: number, previousPageData: AdminAlbum[]) => {
+        if (previousPageData && previousPageData.length === 0) {
+            return null;
+        }
+        return `/api/admin/albums?page=${index + 1}`;
+    };
+
     const {
-        data: albums,
+        data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-    } = useSWR<AdminAlbum[]>('/api/admin/albums', fetcher);
+        setSize,
+    } = useSWRInfinite<AdminAlbum[]>(getKey, fetcher);
+
     const [albumToDelete, setAlbumToDelete] = useState<AdminAlbum | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+    const handlePageChange = (
+        event: React.ChangeEvent<unknown>,
+        value: number,
+    ) => {
+        setCurrentPage(value);
+        setSize(value);
+    };
 
     if (userLoading || albumsLoading) {
         return (
@@ -99,7 +119,11 @@ export default function AlbumsAdminPage() {
         );
     }
 
-    if (!albums || albums.length === 0) {
+    const currentAlbums = paginatedAlbums?.[currentPage - 1] || [];
+    const totalPages =
+        currentAlbums.length < 10 ? currentPage : currentPage + 1;
+
+    if (!currentAlbums || currentAlbums.length === 0) {
         return <Typography align="center">暂无图集</Typography>;
     }
 
@@ -113,7 +137,7 @@ export default function AlbumsAdminPage() {
             throw result;
         }
         alert('图集删除成功');
-        mutate('/api/admin/albums');
+        setSize(currentPage);
         setDeleteDialogOpen(false);
         setAlbumToDelete(null);
     };
@@ -132,7 +156,7 @@ export default function AlbumsAdminPage() {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {albums.map((album) => (
+                        {currentAlbums.map((album) => (
                             <TableRow key={album.id}>
                                 <TableCell>{album.id}</TableCell>
                                 <TableCell>
@@ -162,6 +186,18 @@ export default function AlbumsAdminPage() {
                     </TableBody>
                 </Table>
             </TableContainer>
+
+            <Box
+                sx={{ display: 'flex', justifyContent: 'center', mt: 4, mb: 2 }}
+            >
+                <Pagination
+                    count={totalPages}
+                    page={currentPage}
+                    onChange={handlePageChange}
+                    color="primary"
+                    size="large"
+                />
+            </Box>
 
             <ConfirmDialog
                 isOpen={deleteDialogOpen}
