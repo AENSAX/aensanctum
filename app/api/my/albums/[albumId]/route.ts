@@ -176,6 +176,13 @@ export async function PUT(
         },
         data: updatedData,
     });
+    await prisma.tag.deleteMany({
+        where: {
+            albums: {
+                none: {},
+            },
+        },
+    });
     return NextResponse.json({ status: 200 });
 }
 
