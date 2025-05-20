@@ -24,8 +24,8 @@ export async function GET(request: Request) {
     const [tags, count] = await prisma.$transaction([
         prisma.tag.findMany({
             where: {},
-            skip: (page - 1) * 100,
-            take: 100,
+            skip: (page - 1) * 20,
+            take: 20,
             include: {
                 _count: {
                     select: {

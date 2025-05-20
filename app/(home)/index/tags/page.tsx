@@ -45,7 +45,7 @@ export default function TagsPage() {
 
     const currentTags = paginatedTags?.tags || [];
     const totalPages = paginatedTags?.count
-        ? Math.ceil(paginatedTags.count / 100)
+        ? Math.ceil(paginatedTags.count / 20)
         : 0;
 
     return (
