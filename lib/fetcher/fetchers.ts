@@ -69,13 +69,13 @@ export const useAlbum = (id: string) => {
     return { album, albumErrors, albumLoading };
 };
 
-export const useTagAlbums = (id: string) => {
+export const useTagAlbums = (id: string, page: number) => {
     const {
         data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
     } = useSWR<{ albums: Album[]; count: number }>(
-        `/api/tags/${id}/albums`,
+        `/api/tags/${id}/albums?page=${page}`,
         fetcher,
     );
     return { paginatedAlbums, albumsErrors, albumsLoading };

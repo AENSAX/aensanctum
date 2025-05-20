@@ -15,8 +15,10 @@ import { useParams } from 'next/navigation';
 export default function TagAlbumsPage() {
     const tagId = useParams().id as string;
     const [currentPage, setCurrentPage] = useState(1);
-    const { paginatedAlbums, albumsErrors, albumsLoading } =
-        useTagAlbums(tagId);
+    const { paginatedAlbums, albumsErrors, albumsLoading } = useTagAlbums(
+        tagId,
+        currentPage,
+    );
     const { tag, tagErrors, tagLoading } = useTag(tagId);
 
     const handlePageChange = (
