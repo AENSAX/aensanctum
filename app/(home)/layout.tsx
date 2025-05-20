@@ -10,13 +10,12 @@ import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import { TopBar } from '@/app/_components/toolbar';
 import { LeftBar } from '@/app/_components/toolbar';
 import { tagsFormater } from '@/lib/fetcher/fetchers';
+import LabelIcon from '@mui/icons-material/Label';
 import { mutate } from 'swr';
 import React from 'react';
 
-// 侧边栏宽度
 const drawerWidth = 64;
 
-// 主内容区域样式
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
     open?: boolean;
 }>(({ theme, open }) => ({
@@ -32,16 +31,19 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
     }),
 }));
 
-// 顶部导航栏标签配置
 const topBarTabs = [
     {
         label: '图集',
         value: '/index/albums',
         icon: <CollectionsIcon />,
     },
+    {
+        label: '标签',
+        value: '/index/tags',
+        icon: <LabelIcon />,
+    },
 ];
 
-// 导出默认的 HomeLayout 组件
 export default function HomeLayout({
     children,
 }: {
@@ -50,7 +52,6 @@ export default function HomeLayout({
     const [leftBarOpen, setLeftBarOpen] = useState(false);
     const [createAlbumDialogOpen, setCreateAlbumDialogOpen] = useState(false);
 
-    // 左侧导航栏配置
     const leftBarItems = [
         {
             icon: <HomeIcon />,
@@ -64,21 +65,17 @@ export default function HomeLayout({
 
     return (
         <Box sx={{ display: 'flex' }}>
-            {/* 顶部导航栏 */}
             <TopBar
                 tabs={topBarTabs}
                 onLeftMenuItemClick={() => setLeftBarOpen(!leftBarOpen)}
             />
 
-            {/* 左侧导航栏 */}
             <LeftBar isOpen={leftBarOpen} items={leftBarItems} />
 
-            {/* 主内容区域 */}
             <Main open={leftBarOpen}>
                 <Box sx={{ mt: 8 }}>{children}</Box>
             </Main>
 
-            {/* 创建图集对话框 */}
             <FormDialog
                 title="创建图集"
                 onClose={() => setCreateAlbumDialogOpen(false)}

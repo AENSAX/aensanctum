@@ -2,29 +2,14 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { checkAuth } from '@/lib/auth';
 
-// 获取图集列表
-export async function GET(request: Request) {
+// 获取某标签下的所有图集
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ id: string }> },
+) {
     const authId = await checkAuth();
+    const { id } = await params;
     if (authId === -1) {
-        return NextResponse.json(
-            {
-                errors: [
-                    {
-                        field: 'unauthorized',
-                        message: '未授权',
-                    },
-                ],
-            },
-            { status: 401 },
-        );
-    }
-    const user = await prisma.user.findUnique({
-        where: { id: authId },
-        select: {
-            isAdmin: true,
-        },
-    });
-    if (!user || !user.isAdmin) {
         return NextResponse.json(
             {
                 errors: [
@@ -41,11 +26,30 @@ export async function GET(request: Request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const [albums, count] = await prisma.$transaction([
         prisma.album.findMany({
+            where: {
+                OR: [
+                    { isPrivate: false, pictures: { some: {} } },
+                    { ownerId: authId },
+                ],
+                tags: {
+                    some: {
+                        tagId: parseInt(id),
+                    },
+                },
+            },
             select: {
                 id: true,
-                name: true,
-                createdAt: true,
+                isPrivate: true,
                 ownerId: true,
+                pictures: {
+                    take: 1,
+                    select: {
+                        id: true,
+                        url: true,
+                        albumId: true,
+                        thumbnailUrl: true,
+                    },
+                },
             },
             skip: (page - 1) * 10,
             take: 10,
@@ -53,7 +57,14 @@ export async function GET(request: Request) {
                 id: 'desc',
             },
         }),
-        prisma.album.count({}),
+        prisma.album.count({
+            where: {
+                OR: [
+                    { isPrivate: false, pictures: { some: {} } },
+                    { ownerId: authId },
+                ],
+            },
+        }),
     ]);
     const responseAlbums = {
         albums,

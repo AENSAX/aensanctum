@@ -31,10 +31,26 @@ model Album {
   id          Int       @id @default(autoincrement())
   name        String
   description String    @default("没有简介")
-  tags        String[]
   owner       User      @relation(fields: [ownerId], references: [id])
   ownerId     Int
   isPrivate   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   pictures    Picture[]
+  tags        AlbumTag[]
+}
+
+model Tag {
+  id          Int       @id @default(autoincrement())
+  text        String    @unique
+  albums    AlbumTag[]
+}
+
+model AlbumTag {
+  albumId     Int
+  tagId       Int
+  album       Album     @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([albumId, tagId])
+  @@index([tagId])
+  @@index([albumId])
 }

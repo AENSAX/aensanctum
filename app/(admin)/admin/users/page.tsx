@@ -36,14 +36,13 @@ export default function AdminPage() {
     const [currentPage, setCurrentPage] = useState(1);
 
     const { user: currentUser, userLoading, userErrors } = useUser();
-    const { paginatedUsers, usersErrors, usersLoading, setSize } = useUsers();
+    const { paginatedUsers, usersErrors, usersLoading } = useUsers(currentPage);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
         setCurrentPage(value);
-        setSize(value);
     };
 
     if (userLoading || usersLoading) {
@@ -110,8 +109,10 @@ export default function AdminPage() {
         );
     }
 
-    const currentUsers = paginatedUsers?.[currentPage - 1] || [];
-    const totalPages = currentUsers.length < 10 ? currentPage : currentPage + 1;
+    const currentUsers = paginatedUsers?.users || [];
+    const totalPages = paginatedUsers?.count
+        ? Math.ceil(paginatedUsers.count / 10)
+        : 0;
 
     if (!currentUsers || currentUsers.length === 0) {
         return <Typography align="center">暂无用户</Typography>;
@@ -131,7 +132,6 @@ export default function AdminPage() {
             const result = await response.json();
             throw result;
         }
-        setSize(currentPage);
         setEditDialogOpen(false);
         setSelectedUser(null);
     };

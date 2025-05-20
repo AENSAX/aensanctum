@@ -10,30 +10,40 @@ export async function GET(request: Request) {
     }
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const albums = await prisma.album.findMany({
-        where: {
-            ownerId: authId,
-        },
-        select: {
-            id: true,
-            isPrivate: true,
-            ownerId: true,
-            pictures: {
-                take: 1,
-                select: {
-                    id: true,
-                    url: true,
-                    albumId: true,
-                    thumbnailUrl: true,
+    const [albums, count] = await prisma.$transaction([
+        prisma.album.findMany({
+            where: {
+                ownerId: authId,
+            },
+            select: {
+                id: true,
+                isPrivate: true,
+                ownerId: true,
+                pictures: {
+                    take: 1,
+                    select: {
+                        id: true,
+                        url: true,
+                        albumId: true,
+                        thumbnailUrl: true,
+                    },
                 },
             },
-        },
-        skip: (page - 1) * 10,
-        take: 10,
-        orderBy: {
-            id: 'desc',
-        },
-    });
-
-    return NextResponse.json(albums);
+            skip: (page - 1) * 10,
+            take: 10,
+            orderBy: {
+                id: 'desc',
+            },
+        }),
+        prisma.album.count({
+            where: {
+                ownerId: authId,
+            },
+        }),
+    ]);
+    const responseAlbums = {
+        albums,
+        count: count,
+    };
+    return NextResponse.json(responseAlbums, { status: 200 });
 }

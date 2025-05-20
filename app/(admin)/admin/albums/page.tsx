@@ -17,10 +17,10 @@ import {
 } from '@mui/material';
 import { useUser } from '@/lib/fetcher/fetchers';
 import Link from 'next/link';
-import useSWRInfinite from 'swr/infinite';
 import { fetcher } from '@/lib/fetcher/fetchers';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ConfirmDialog } from '@/app/_components/dialog';
+import useSWR from 'swr';
 
 interface AdminAlbum {
     id: number;
@@ -33,19 +33,14 @@ export default function AlbumsAdminPage() {
     const { user: currentUser, userLoading, userErrors } = useUser();
     const [currentPage, setCurrentPage] = useState(1);
 
-    const getKey = (index: number, previousPageData: AdminAlbum[]) => {
-        if (previousPageData && previousPageData.length === 0) {
-            return null;
-        }
-        return `/api/admin/albums?page=${index + 1}`;
-    };
-
     const {
         data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-        setSize,
-    } = useSWRInfinite<AdminAlbum[]>(getKey, fetcher);
+    } = useSWR<{ albums: AdminAlbum[]; count: number }>(
+        `/api/admin/albums?page=${currentPage}`,
+        fetcher,
+    );
 
     const [albumToDelete, setAlbumToDelete] = useState<AdminAlbum | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -55,7 +50,6 @@ export default function AlbumsAdminPage() {
         value: number,
     ) => {
         setCurrentPage(value);
-        setSize(value);
     };
 
     if (userLoading || albumsLoading) {
@@ -119,9 +113,10 @@ export default function AlbumsAdminPage() {
         );
     }
 
-    const currentAlbums = paginatedAlbums?.[currentPage - 1] || [];
-    const totalPages =
-        currentAlbums.length < 10 ? currentPage : currentPage + 1;
+    const currentAlbums = paginatedAlbums?.albums || [];
+    const totalPages = paginatedAlbums?.count
+        ? Math.ceil(paginatedAlbums.count / 10)
+        : 0;
 
     if (!currentAlbums || currentAlbums.length === 0) {
         return <Typography align="center">暂无图集</Typography>;
@@ -137,7 +132,6 @@ export default function AlbumsAdminPage() {
             throw result;
         }
         alert('图集删除成功');
-        setSize(currentPage);
         setDeleteDialogOpen(false);
         setAlbumToDelete(null);
     };

@@ -1,6 +1,11 @@
-import { User, Album, AlbumDetail, Picture } from '../interfaces/interfaces';
+import {
+    User,
+    Album,
+    AlbumDetail,
+    Picture,
+    Tag,
+} from '../interfaces/interfaces';
 import useSWR from 'swr';
-import useSWRInfinite from 'swr/infinite';
 
 export const fetcher = async (url: string) => {
     const res = await fetch(url);
@@ -19,48 +24,40 @@ export const useUser = () => {
     return { user, userErrors, userLoading };
 };
 
-export const useUsers = () => {
-    const getIndex = (index: number, previousPageData: User[]) => {
-        if (previousPageData && previousPageData.length === 0) {
-            return null;
-        }
-        return `/api/admin/users?page=${index + 1}`;
-    };
+export const useUsers = (page: number) => {
     const {
         data: paginatedUsers,
         error: usersErrors,
         isLoading: usersLoading,
-        size,
-        setSize,
-    } = useSWRInfinite<User[]>(getIndex, fetcher);
-    return { paginatedUsers, usersErrors, usersLoading, size, setSize };
+    } = useSWR<{ users: User[]; count: number }>(
+        `/api/admin/users?page=${page}`,
+        fetcher,
+    );
+    return { paginatedUsers, usersErrors, usersLoading };
 };
 
-export const useAlbums = (
-    getIndex: (index: number, previousPageData: Album[]) => string | null,
-) => {
+export const useAlbums = (page: number) => {
     const {
         data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-        size,
-        setSize,
-    } = useSWRInfinite<Album[]>(getIndex, fetcher);
-
-    return { paginatedAlbums, albumsErrors, albumsLoading, size, setSize };
+    } = useSWR<{ albums: Album[]; count: number }>(
+        `/api/albums?page=${page}`,
+        fetcher,
+    );
+    return { paginatedAlbums, albumsErrors, albumsLoading };
 };
 
-export const useMyAlbums = (
-    getIndex: (index: number, previousPageData: Album[]) => string | null,
-) => {
+export const useMyAlbums = (page: number) => {
     const {
         data: paginatedAlbums,
         error: albumsErrors,
         isLoading: albumsLoading,
-        size,
-        setSize,
-    } = useSWRInfinite<Album[]>(getIndex, fetcher);
-    return { paginatedAlbums, albumsErrors, albumsLoading, size, setSize };
+    } = useSWR<{ albums: Album[]; count: number }>(
+        `/api/my/albums?page=${page}`,
+        fetcher,
+    );
+    return { paginatedAlbums, albumsErrors, albumsLoading };
 };
 
 export const useAlbum = (id: string) => {
@@ -72,23 +69,50 @@ export const useAlbum = (id: string) => {
     return { album, albumErrors, albumLoading };
 };
 
-export const useAlbumPictures = (
-    getIndex: (index: number, previousPageData: Picture[]) => string | null,
-) => {
+export const useTagAlbums = (id: string) => {
+    const {
+        data: paginatedAlbums,
+        error: albumsErrors,
+        isLoading: albumsLoading,
+    } = useSWR<{ albums: Album[]; count: number }>(
+        `/api/tags/${id}/albums`,
+        fetcher,
+    );
+    return { paginatedAlbums, albumsErrors, albumsLoading };
+};
+
+export const useAlbumPictures = (page: number, id: string) => {
     const {
         data: paginatedPictures,
         error: picturesErrors,
         isLoading: picturesLoading,
-        size,
-        setSize,
-    } = useSWRInfinite<Picture[]>(getIndex, fetcher);
+    } = useSWR<Picture[]>(`/api/albums/${id}/pictures?page=${page}`, fetcher);
     return {
         paginatedPictures,
         picturesErrors,
         picturesLoading,
-        size,
-        setSize,
     };
+};
+
+export const useTag = (id: string) => {
+    const {
+        data: tag,
+        error: tagErrors,
+        isLoading: tagLoading,
+    } = useSWR<Tag>(`/api/tags/${id}`, fetcher);
+    return { tag, tagErrors, tagLoading };
+};
+
+export const useTags = (page: number) => {
+    const {
+        data: paginatedTags,
+        error: tagsErrors,
+        isLoading: tagsLoading,
+    } = useSWR<{ tags: Tag[]; count: number }>(
+        `/api/tags?page=${page}`,
+        fetcher,
+    );
+    return { paginatedTags, tagsErrors, tagsLoading };
 };
 
 export const tagsFormater = (tags: string) => {

@@ -142,9 +142,33 @@ export async function PUT(
     }
     const updatedData = {
         name: name || currentAlbum.name,
-        tags: tags || currentAlbum.tags,
         isPrivate: isPrivate ?? currentAlbum.isPrivate,
     };
+    await prisma.$transaction(async (tx) => {
+        await tx.albumTag.deleteMany({
+            where: { albumId: parseInt(albumId) },
+        });
+        const tagIds = await Promise.all(
+            tags.map(async (t) => {
+                const existTag = await tx.tag.findFirst({
+                    where: { text: t },
+                });
+                if (existTag) {
+                    return existTag.id;
+                }
+                const newTag = await tx.tag.create({
+                    data: { text: t },
+                });
+                return newTag.id;
+            }),
+        );
+        await tx.albumTag.createMany({
+            data: tagIds.map((tagId) => ({
+                albumId: parseInt(albumId),
+                tagId,
+            })),
+        });
+    });
     await prisma.album.update({
         where: {
             id: parseInt(albumId),

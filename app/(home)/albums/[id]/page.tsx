@@ -15,7 +15,6 @@ import { ConfirmDialog } from '@/app/_components/dialog';
 import { AlbumDetailCard } from '@/app/_components/album';
 import { useUser, useAlbum, useAlbumPictures } from '@/lib/fetcher/fetchers';
 import { useParams } from 'next/navigation';
-import { Picture } from '@/lib/interfaces/interfaces';
 
 export default function AlbumPage() {
     const albumId = useParams().id as string;
@@ -28,22 +27,14 @@ export default function AlbumPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
 
-    const getIndex = (index: number, previousPageData: Picture[]) => {
-        if (previousPageData && previousPageData.length === 0) {
-            return null;
-        }
-        return `/api/albums/${albumId}/pictures?page=${index + 1}`;
-    };
-
-    const { paginatedPictures, picturesErrors, picturesLoading, setSize } =
-        useAlbumPictures(getIndex);
+    const { paginatedPictures, picturesErrors, picturesLoading } =
+        useAlbumPictures(currentPage, albumId);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
         setCurrentPage(value);
-        setSize(value);
     };
 
     const router = useRouter();
@@ -132,7 +123,7 @@ export default function AlbumPage() {
         setEditDialogOpen(false);
     };
 
-    const currentPictures = paginatedPictures?.[currentPage - 1] || [];
+    const currentPictures = paginatedPictures || [];
     const totalPages = album._count.pictures
         ? Math.ceil(album._count.pictures / 10)
         : 0;

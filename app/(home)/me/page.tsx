@@ -14,7 +14,6 @@ import { useState } from 'react';
 import { UserInfoCard } from '@/app/_components/user';
 import { useUser } from '@/lib/fetcher/fetchers';
 import { useMyAlbums } from '@/lib/fetcher/fetchers';
-import { Album } from '@/lib/interfaces/interfaces';
 import React from 'react';
 
 interface TabPanelProps {
@@ -44,22 +43,14 @@ export default function MePage() {
     const [currentPage, setCurrentPage] = useState(1);
     const [tabValue, setTabValue] = useState(0);
 
-    const getIndex = (index: number, previousPageData: Album[]) => {
-        if (previousPageData && previousPageData.length === 0) {
-            return null;
-        }
-        return `/api/my/albums?page=${index + 1}`;
-    };
-
-    const { paginatedAlbums, albumsErrors, albumsLoading, setSize } =
-        useMyAlbums(getIndex);
+    const { paginatedAlbums, albumsErrors, albumsLoading } =
+        useMyAlbums(currentPage);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
         setCurrentPage(value);
-        setSize(value);
     };
 
     if (userLoading) {
@@ -87,9 +78,10 @@ export default function MePage() {
         setTabValue(newValue);
     };
 
-    const currentAlbums = paginatedAlbums?.[currentPage - 1] || [];
-    const totalPages =
-        currentAlbums.length < 10 ? currentPage : currentPage + 1;
+    const currentAlbums = paginatedAlbums?.albums || [];
+    const totalPages = paginatedAlbums?.count
+        ? Math.ceil(paginatedAlbums.count / 10)
+        : 0;
 
     return (
         <Container maxWidth="xl">

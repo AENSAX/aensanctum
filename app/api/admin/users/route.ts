@@ -39,20 +39,27 @@ export async function GET(request: Request) {
     }
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const users = await prisma.user.findMany({
-        select: {
-            id: true,
-            email: true,
-            name: true,
-            createdAt: true,
-            isAdmin: true,
-            isActive: true,
-        },
-        orderBy: {
-            id: 'asc',
-        },
-        skip: (page - 1) * 10,
-        take: 10,
-    });
-    return NextResponse.json(users);
+    const [users, count] = await prisma.$transaction([
+        prisma.user.findMany({
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                createdAt: true,
+                isAdmin: true,
+                isActive: true,
+            },
+            orderBy: {
+                id: 'asc',
+            },
+            skip: (page - 1) * 10,
+            take: 10,
+        }),
+        prisma.user.count({}),
+    ]);
+    const responseUsers = {
+        users,
+        count: count,
+    };
+    return NextResponse.json(responseUsers, { status: 200 });
 }

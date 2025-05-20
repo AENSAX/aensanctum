@@ -36,6 +36,16 @@ export async function GET(
                     id: 'asc',
                 },
             },
+            tags: {
+                include: {
+                    tag: {
+                        select: {
+                            id: true,
+                            text: true,
+                        },
+                    },
+                },
+            },
             _count: {
                 select: {
                     pictures: true,
@@ -43,6 +53,7 @@ export async function GET(
             },
         },
     });
+
     if (!album) {
         return NextResponse.json(
             {
@@ -73,6 +84,7 @@ export async function GET(
     const albumResponse = {
         ...album,
         createdAt: album.createdAt.toISOString(),
+        tags: album.tags.map((tag) => tag.tag),
     };
     return NextResponse.json(albumResponse);
 }

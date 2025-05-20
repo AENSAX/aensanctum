@@ -184,7 +184,7 @@ export function AlbumDetailCard({
                         color="text.secondary"
                         sx={{ mb: 2 }}
                     >
-                        #{album.tags.join('#')}
+                        #{album.tags.map((t) => t.text).join('#')}
                     </Typography>
                 )}
 
@@ -807,7 +807,7 @@ export function EditAlbumInfo({
                     },
                     tags: {
                         label: '图集标签',
-                        defaultValue: album.tags.join(' '),
+                        defaultValue: album.tags.map((t) => t.text).join(' '),
                         type: 'text',
                         required: true,
                         placeholder:

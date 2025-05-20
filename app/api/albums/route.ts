@@ -21,34 +21,48 @@ export async function GET(request: Request) {
     }
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const albums = await prisma.album.findMany({
-        where: {
-            OR: [
-                { isPrivate: false, pictures: { some: {} } },
-                { ownerId: authId },
-            ],
-        },
-        select: {
-            id: true,
-            isPrivate: true,
-            ownerId: true,
-            pictures: {
-                take: 1,
-                select: {
-                    id: true,
-                    url: true,
-                    albumId: true,
-                    thumbnailUrl: true,
+    const [albums, count] = await prisma.$transaction([
+        prisma.album.findMany({
+            where: {
+                OR: [
+                    { isPrivate: false, pictures: { some: {} } },
+                    { ownerId: authId },
+                ],
+            },
+            select: {
+                id: true,
+                isPrivate: true,
+                ownerId: true,
+                pictures: {
+                    take: 1,
+                    select: {
+                        id: true,
+                        url: true,
+                        albumId: true,
+                        thumbnailUrl: true,
+                    },
                 },
             },
-        },
-        skip: (page - 1) * 10,
-        take: 10,
-        orderBy: {
-            id: 'desc',
-        },
-    });
-    return NextResponse.json(albums, { status: 200 });
+            skip: (page - 1) * 10,
+            take: 10,
+            orderBy: {
+                id: 'desc',
+            },
+        }),
+        prisma.album.count({
+            where: {
+                OR: [
+                    { isPrivate: false, pictures: { some: {} } },
+                    { ownerId: authId },
+                ],
+            },
+        }),
+    ]);
+    const responseAlbums = {
+        albums,
+        count: count,
+    };
+    return NextResponse.json(responseAlbums, { status: 200 });
 }
 
 // 创建图集
@@ -108,11 +122,29 @@ export async function POST(request: Request) {
         );
     }
     const { name, tags, isPrivate } = result.data;
-
+    const tagIds = await Promise.all(
+        tags.map(async (t) => {
+            const existTag = await prisma.tag.findFirst({
+                where: { text: t },
+            });
+            if (existTag) {
+                return existTag.id;
+            }
+            const newTag = await prisma.tag.create({
+                data: { text: t },
+            });
+            return newTag.id;
+        }),
+    );
+    await prisma.albumTag.createMany({
+        data: tagIds.map((tagId) => ({
+            tagId,
+            albumId: album.id,
+        })),
+    });
     const album = await prisma.album.create({
         data: {
             name,
-            tags,
             isPrivate,
             ownerId: authId,
         },

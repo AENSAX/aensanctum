@@ -18,9 +18,17 @@ export interface AlbumDetail {
     name: string;
     id: number;
     description: string;
-    tags: string[];
+    tags: Tag[];
     ownerId: number;
     isPrivate: boolean;
+}
+
+export interface Tag {
+    id: number;
+    text: string;
+    _count: {
+        albums: number;
+    };
 }
 
 export interface Picture {
