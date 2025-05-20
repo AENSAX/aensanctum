@@ -63,6 +63,11 @@ export async function GET(
                     { isPrivate: false, pictures: { some: {} } },
                     { ownerId: authId },
                 ],
+                tags: {
+                    some: {
+                        tagId: parseInt(id),
+                    },
+                },
             },
         }),
     ]);
