@@ -34,7 +34,7 @@ export default function ResultPage() {
     );
 }
 
-export function SearchResultAlbumsPage() {
+function SearchResultAlbumsPage() {
     const [currentPage, setCurrentPage] = useState(1);
     const searchParams = useSearchParams();
     const keyword = searchParams.get('q') || '';
