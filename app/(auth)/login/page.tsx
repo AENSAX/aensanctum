@@ -1,10 +1,57 @@
 'use client';
 
 import { LoginForm } from '@/app/_components/auth';
-import { Container, Paper, Typography, Box, Link } from '@mui/material';
+import {
+    Container,
+    Paper,
+    Typography,
+    Box,
+    Link,
+    CircularProgress,
+} from '@mui/material';
 import NextLink from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { useUser } from '@/lib/fetcher/fetchers';
+import { useEffect } from 'react';
+
 export default function LoginPage() {
+    const { user, userLoading } = useUser();
+    const router = useRouter();
+    useEffect(() => {
+        if (user && !userLoading) {
+            router.push('/index/search');
+        }
+    }, [user, userLoading, router]);
+
+    if (userLoading) {
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '200px',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
+    if (userLoading) {
+        return (
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minHeight: '200px',
+                }}
+            >
+                <CircularProgress />
+            </Box>
+        );
+    }
     return (
         <Container component="main" maxWidth="xs">
             <Box sx={{ mt: 8 }}>

@@ -10,17 +10,12 @@ export async function middleware(request: NextRequest) {
     }
 
     const isMePage = request.nextUrl.pathname.startsWith('/me');
-    const isAlbumPage =
-        request.nextUrl.pathname.startsWith('/album') ||
-        request.nextUrl.pathname.startsWith('/index/albums');
+    const isAlbumPage = request.nextUrl.pathname.startsWith('/albums');
+    const isResultPage = request.nextUrl.pathname.startsWith('/result');
+    const isTagPage = request.nextUrl.pathname.startsWith('/tags');
 
-    if (isMePage && !isAuth) {
+    if ((isMePage || isAlbumPage || isTagPage || isResultPage) && !isAuth) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
-
-    if (isAlbumPage && !isAuth) {
-        return NextResponse.redirect(new URL('/login', request.url));
-    }
-
     return NextResponse.next();
 }

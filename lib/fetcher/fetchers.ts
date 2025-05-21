@@ -115,6 +115,18 @@ export const useTags = (page: number) => {
     return { paginatedTags, tagsErrors, tagsLoading };
 };
 
+export const useSearch = (page: number, keyword: string) => {
+    const {
+        data: paginatedAlbums,
+        error: albumsErrors,
+        isLoading: albumsLoading,
+    } = useSWR<{ albums: Album[]; count: number }>(
+        `/api/search?page=${page}&keyword=${keyword}`,
+        fetcher,
+    );
+    return { paginatedAlbums, albumsErrors, albumsLoading };
+};
+
 export const tagsFormater = (tags: string) => {
     return [
         ...new Set(

@@ -128,7 +128,7 @@ export function TopBar({
 
                 {/* Logo 区域 */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Link href="/index/albums" passHref>
+                    <Link href="/index/search" passHref>
                         <Image
                             src="/logo.png"
                             alt="AenSanctum Logo"

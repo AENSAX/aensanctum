@@ -6,15 +6,14 @@ import { useAlbums } from '@/lib/fetcher/fetchers';
 import { useState } from 'react';
 
 export default function AlbumsPage() {
-    const [currentPage, setCurrentPage] = useState(1);
-    const { paginatedAlbums, albumsErrors, albumsLoading } =
-        useAlbums(currentPage);
+    const [page, setPage] = useState(1);
+    const { paginatedAlbums, albumsErrors, albumsLoading } = useAlbums(page);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
-        setCurrentPage(value);
+        setPage(value);
     };
 
     if (albumsErrors && albumsErrors.length > 0) {
@@ -64,7 +63,7 @@ export default function AlbumsPage() {
                     >
                         <Pagination
                             count={totalPages}
-                            page={currentPage}
+                            page={page}
                             onChange={handlePageChange}
                             color="primary"
                             size="large"

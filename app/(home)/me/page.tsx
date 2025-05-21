@@ -40,17 +40,16 @@ function TabPanel(props: TabPanelProps) {
 
 export default function MePage() {
     const { user, userLoading } = useUser();
-    const [currentPage, setCurrentPage] = useState(1);
+    const [page, setPage] = useState(1);
     const [tabValue, setTabValue] = useState(0);
 
-    const { paginatedAlbums, albumsErrors, albumsLoading } =
-        useMyAlbums(currentPage);
+    const { paginatedAlbums, albumsErrors, albumsLoading } = useMyAlbums(page);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
-        setCurrentPage(value);
+        setPage(value);
     };
 
     if (userLoading) {
@@ -140,7 +139,7 @@ export default function MePage() {
                             >
                                 <Pagination
                                     count={totalPages}
-                                    page={currentPage}
+                                    page={page}
                                     onChange={handlePageChange}
                                     color="primary"
                                     size="large"

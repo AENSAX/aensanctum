@@ -25,16 +25,16 @@ export default function AlbumPage() {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [editPicturesDialogOpen, setEditPicturesDialogOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [page, setPage] = useState(1);
 
     const { paginatedPictures, picturesErrors, picturesLoading } =
-        useAlbumPictures(currentPage, albumId);
+        useAlbumPictures(page, albumId);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
-        setCurrentPage(value);
+        setPage(value);
     };
 
     const router = useRouter();
@@ -169,7 +169,7 @@ export default function AlbumPage() {
                             >
                                 <Pagination
                                     count={totalPages}
-                                    page={currentPage}
+                                    page={page}
                                     onChange={handlePageChange}
                                     color="primary"
                                     size="large"

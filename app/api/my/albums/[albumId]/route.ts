@@ -130,6 +130,7 @@ export async function PUT(
         );
     }
     const { name, tags, isPrivate } = result.data;
+    const searchText = name + tags.join('');
 
     const currentAlbum = await prisma.album.findUnique({
         where: {
@@ -142,6 +143,7 @@ export async function PUT(
     }
     const updatedData = {
         name: name || currentAlbum.name,
+        searchText,
         isPrivate: isPrivate ?? currentAlbum.isPrivate,
     };
     await prisma.$transaction(async (tx) => {

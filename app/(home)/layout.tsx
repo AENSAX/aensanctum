@@ -33,6 +33,11 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
 
 const topBarTabs = [
     {
+        label: '首页',
+        value: '/index/search',
+        icon: <HomeIcon />,
+    },
+    {
         label: '图集',
         value: '/index/albums',
         icon: <CollectionsIcon />,
@@ -55,7 +60,7 @@ export default function HomeLayout({
     const leftBarItems = [
         {
             icon: <HomeIcon />,
-            href: '/index/albums',
+            href: '/index/search',
         },
         {
             icon: <CreateNewFolderIcon />,

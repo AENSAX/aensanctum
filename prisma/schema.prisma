@@ -37,6 +37,7 @@ model Album {
   createdAt   DateTime  @default(now())
   pictures    Picture[]
   tags        AlbumTag[]
+  searchText  String    @default("")
 }
 
 model Tag {

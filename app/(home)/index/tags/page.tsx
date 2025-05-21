@@ -13,14 +13,14 @@ import { TagCard } from '@/app/_components/tag';
 
 export default function TagsPage() {
     const colors = ['rgb(255, 255, 255)', 'rgba(255, 209, 221, 0.23)'];
-    const [currentPage, setCurrentPage] = useState(1);
-    const { paginatedTags, tagsErrors, tagsLoading } = useTags(currentPage);
+    const [page, setPage] = useState(1);
+    const { paginatedTags, tagsErrors, tagsLoading } = useTags(page);
 
     const handlePageChange = (
         event: React.ChangeEvent<unknown>,
         value: number,
     ) => {
-        setCurrentPage(value);
+        setPage(value);
     };
 
     if (tagsErrors && tagsErrors.length > 0) {
@@ -103,7 +103,7 @@ export default function TagsPage() {
                             >
                                 <Pagination
                                     count={totalPages}
-                                    page={currentPage}
+                                    page={page}
                                     onChange={handlePageChange}
                                     color="primary"
                                     size="small"
