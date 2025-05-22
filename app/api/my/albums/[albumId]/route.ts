@@ -87,27 +87,19 @@ export async function PUT(
     const schema = z.object({
         name: z
             .string()
-            .min(1, '图集名称不能为空')
-            .max(100, '图集名称不能超过100个字符')
             .trim()
-            .regex(
-                /^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-                '图集名称只能包含中英文、数字、空格和横杠',
-            ),
+            .min(1, '图集名称不能为空')
+            .max(100, '图集名称不能超过100个字符'),
         tags: z
             .array(
                 z
                     .string()
-                    .min(1, '标签不能为空')
-                    .max(20, '标签不能超过20个字符')
                     .trim()
-                    .regex(
-                        /^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/,
-                        '标签只能包含中英文、数字、空格和横杠',
-                    ),
+                    .min(1, '标签不能为空')
+                    .max(100, '标签不能超过100个字符'),
             )
             .min(1, '至少需要一个标签')
-            .max(10, '最多只能添加10个标签'),
+            .max(50, '最多只能添加50个标签'),
         isPrivate: z.boolean({
             required_error: '缺少可见性信息',
         }),

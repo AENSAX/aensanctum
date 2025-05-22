@@ -94,11 +94,10 @@ export default function HomeLayout({
                         validator: (val) => {
                             if (val === undefined) return '值无效';
                             if (
-                                !/^[a-zA-Z0-9\u4e00-\u9fa5\- ]{1,100}$/.test(
-                                    val.trim(),
-                                )
+                                val.trim().length == 0 ||
+                                val.trim().length > 100
                             ) {
-                                return '图集名称只能包含中英文、数字、空格和横杠，长度在1-100个字符之间';
+                                return '图集名称长度在1-100个字符之间';
                             }
                             return null;
                         },
@@ -112,11 +111,10 @@ export default function HomeLayout({
                         validator: (val) => {
                             if (val === undefined) return '值无效';
                             if (
-                                !/^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/.test(
-                                    val.trim(),
-                                )
+                                val.trim().length == 0 ||
+                                val.trim().length > 500
                             ) {
-                                return '标签只能包含中英文、数字、空格和横杠';
+                                return '标签长度在1-500个字符之间';
                             }
                             return null;
                         },

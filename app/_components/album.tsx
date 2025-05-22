@@ -180,11 +180,27 @@ export function AlbumDetailCard({
 
                 {album?.tags?.length > 0 && (
                     <Typography
-                        variant="body1"
+                        variant="body2"
                         color="text.secondary"
-                        sx={{ mb: 2 }}
+                        sx={{
+                            mb: 2,
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 1,
+                        }}
                     >
-                        #{album.tags.map((t) => t.text).join('#')}
+                        {album.tags.map((t) => (
+                            <Link
+                                key={t.text}
+                                href={`/tags/${t.id}`}
+                                style={{
+                                    textDecoration: 'none',
+                                    color: 'rgb(239, 178, 216)',
+                                }}
+                            >
+                                #{t.text}
+                            </Link>
+                        ))}
                     </Typography>
                 )}
 
@@ -796,11 +812,10 @@ export function EditAlbumInfo({
                         validator: (val) => {
                             if (val === undefined) return '值无效';
                             if (
-                                !/^[a-zA-Z0-9\u4e00-\u9fa5\- ]{1,100}$/.test(
-                                    val.trim(),
-                                )
+                                val.trim().length == 0 ||
+                                val.trim().length > 100
                             ) {
-                                return '图集名称只能包含中英文、数字、空格和横杠，长度在1-100个字符之间';
+                                return '图集名称长度在1-100个字符之间';
                             }
                             return null;
                         },
@@ -815,11 +830,10 @@ export function EditAlbumInfo({
                         validator: (val) => {
                             if (val === undefined) return '值无效';
                             if (
-                                !/^[a-zA-Z0-9\u4e00-\u9fa5\- ]+$/.test(
-                                    val.trim(),
-                                )
+                                val.trim().length == 0 ||
+                                val.trim().length > 500
                             ) {
-                                return '标签只能包含中英文、数字、空格和横杠';
+                                return '标签长度在1-500个字符之间';
                             }
                             return null;
                         },
