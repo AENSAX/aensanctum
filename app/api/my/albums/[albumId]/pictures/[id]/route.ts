@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { checkAuth } from '@/lib/auth';
-import { S3Client, DeleteObjectCommand } from '@aws-sdk/client-s3';
-
-const s3 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
-    },
-});
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
+import s3 from '@/lib/s3';
 
 function getFileNameFromUrl(url: string): string {
     const urlParts = url.split('/');
