@@ -10,7 +10,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@/app/_components/dialog';
-import { User } from '@/lib/interfaces/interfaces';
+import { User } from '@/lib/types';
 
 export function UserInfoCard({ userInfo }: { userInfo: User }) {
     const router = useRouter();

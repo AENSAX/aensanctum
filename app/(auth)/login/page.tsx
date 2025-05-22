@@ -12,7 +12,7 @@ import {
 import NextLink from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
 import { useEffect } from 'react';
 
 export default function LoginPage() {

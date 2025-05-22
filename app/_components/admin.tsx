@@ -12,7 +12,7 @@ import {
     FormControlLabel,
     Alert,
 } from '@mui/material';
-import { User, ErrorResponse } from '@/lib/interfaces/interfaces';
+import { User, ErrorResponse } from '@/lib/types';
 
 interface EditDialogProps {
     open: boolean;

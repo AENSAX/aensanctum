@@ -1,6 +1,6 @@
 'use client';
 
-import { Tag } from '@/lib/interfaces/interfaces';
+import { Tag } from '@/lib/types';
 import { Typography } from '@mui/material';
 import Link from 'next/link';
 

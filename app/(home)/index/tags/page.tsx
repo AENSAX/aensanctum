@@ -8,7 +8,7 @@ import {
     CircularProgress,
 } from '@mui/material';
 import { useState } from 'react';
-import { useTags } from '@/lib/fetcher/fetchers';
+import { useTags } from '@/lib/fetchers';
 import { TagCard } from '@/app/_components/tag';
 
 export default function TagsPage() {

@@ -12,8 +12,8 @@ import {
 import { AlbumsGrid } from '@/app/_components/album';
 import { useState } from 'react';
 import { UserInfoCard } from '@/app/_components/user';
-import { useUser } from '@/lib/fetcher/fetchers';
-import { useMyAlbums } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
+import { useMyAlbums } from '@/lib/fetchers';
 import React from 'react';
 
 interface TabPanelProps {

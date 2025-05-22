@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { sessionOptions } from '@/lib/session/sessionOptions';
+import { sessionOptions, SessionUser } from '@/lib/session';
 import { getIronSession } from 'iron-session';
 import prisma from '@/lib/db';
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
-import { SessionUser } from '@/lib/session/types';
-import { getSessionUser } from '@/lib/session/getSession';
+import { getSessionUser } from '@/lib/session';
 
 export async function POST(request: Request) {
     const schema = z.object({

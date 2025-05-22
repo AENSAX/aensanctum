@@ -18,11 +18,11 @@ import {
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import LockResetIcon from '@mui/icons-material/LockReset';
-import { useUser } from '@/lib/fetcher/fetchers';
-import { User } from '@/lib/interfaces/interfaces';
+import { useUser } from '@/lib/fetchers';
+import { User } from '@/lib/types';
 import { ConfirmDialog } from '@/app/_components/dialog';
 import { EditUserDialog } from '@/app/_components/admin';
-import { useUsers } from '@/lib/fetcher/fetchers';
+import { useUsers } from '@/lib/fetchers';
 import Link from 'next/link';
 
 export default function AdminPage() {

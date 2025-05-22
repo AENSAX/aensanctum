@@ -2,7 +2,7 @@
 
 import { Box, Typography, CircularProgress, Pagination } from '@mui/material';
 import { AlbumsGrid } from '@/app/_components/album';
-import { useAlbums } from '@/lib/fetcher/fetchers';
+import { useAlbums } from '@/lib/fetchers';
 import { useState } from 'react';
 
 export default function AlbumsPage() {
