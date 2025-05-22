@@ -70,6 +70,13 @@ export async function DELETE(
             ownerId: authId,
         },
     });
+    await prisma.tag.deleteMany({
+        where: {
+            albums: {
+                none: {},
+            },
+        },
+    });
 
     return NextResponse.json({ message: '图集删除成功' }, { status: 200 });
 }
