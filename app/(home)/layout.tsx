@@ -9,7 +9,7 @@ import CollectionsIcon from '@mui/icons-material/Collections';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import { TopBar } from '@/app/_components/toolbar';
 import { LeftBar } from '@/app/_components/toolbar';
-import { tagsFormater } from '@/lib/fetcher/fetchers';
+import { tagsFormater } from '@/lib/fetchers';
 import LabelIcon from '@mui/icons-material/Label';
 import { mutate } from 'swr';
 import React from 'react';

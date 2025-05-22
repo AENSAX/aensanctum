@@ -11,11 +11,11 @@ import {
     IconButton,
     Alert,
 } from '@mui/material';
-import { useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
 import Link from 'next/link';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import useSWR, { mutate } from 'swr';
-import { fetcher } from '@/lib/fetcher/fetchers';
+import { fetcher } from '@/lib/fetchers';
 
 export default function AdminMePage() {
     const { user: currentUser, userLoading, userErrors } = useUser();

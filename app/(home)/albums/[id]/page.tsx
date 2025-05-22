@@ -13,7 +13,7 @@ import { useRouter } from 'next/navigation';
 import { EditAlbumInfo, EditAlbumPictures } from '@/app/_components/album';
 import { ConfirmDialog } from '@/app/_components/dialog';
 import { AlbumDetailCard } from '@/app/_components/album';
-import { useUser, useAlbum, useAlbumPictures } from '@/lib/fetcher/fetchers';
+import { useUser, useAlbum, useAlbumPictures } from '@/lib/fetchers';
 import { useParams } from 'next/navigation';
 
 export default function AlbumPage() {

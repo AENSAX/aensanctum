@@ -1,6 +1,6 @@
 'use client';
 
-import { Picture } from '@/lib/interfaces/interfaces';
+import { Picture } from '@/lib/types';
 import {
     Typography,
     Box,
@@ -11,7 +11,7 @@ import {
 import Image from 'next/image';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
-import { useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
 import { ConfirmDialog } from './dialog';
 import { mutate } from 'swr';
 

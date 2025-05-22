@@ -3,7 +3,7 @@
 import { Box } from '@mui/material';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
 import { TopBar } from '@/app/_components/toolbar';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import CollectionsIcon from '@mui/icons-material/Collections';

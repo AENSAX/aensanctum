@@ -8,7 +8,7 @@ import {
     Divider,
 } from '@mui/material';
 import { AlbumsGrid } from '@/app/_components/album';
-import { useSearch } from '@/lib/fetcher/fetchers';
+import { useSearch } from '@/lib/fetchers';
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';

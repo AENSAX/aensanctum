@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import React from 'react';
-import { ErrorResponse } from '@/lib/interfaces/interfaces';
+import { ErrorResponse } from '@/lib/types';
 
 //确认对话框
 interface ButtonProps {

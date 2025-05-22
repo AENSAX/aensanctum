@@ -15,9 +15,9 @@ import {
     IconButton,
     Pagination,
 } from '@mui/material';
-import { useUser } from '@/lib/fetcher/fetchers';
+import { useUser } from '@/lib/fetchers';
 import Link from 'next/link';
-import { fetcher } from '@/lib/fetcher/fetchers';
+import { fetcher } from '@/lib/fetchers';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { ConfirmDialog } from '@/app/_components/dialog';
 import useSWR from 'swr';

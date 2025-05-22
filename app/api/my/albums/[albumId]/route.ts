@@ -1,15 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { z } from 'zod';
-import {
-    S3Client,
-    PutObjectCommand,
-    GetObjectCommand,
-    DeleteObjectCommand,
-} from '@aws-sdk/client-s3';
-import sharp from 'sharp';
-import { Readable } from 'stream';
+import { DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { checkAuth } from '@/lib/auth';
+import s3 from '@/lib/s3';
+import { thumbnail } from '@/lib/workers';
 
 export async function DELETE(
     request: Request,
@@ -180,62 +175,9 @@ export async function PUT(
     return NextResponse.json({ status: 200 });
 }
 
-const s3 = new S3Client({
-    region: 'auto',
-    endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-    credentials: {
-        accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '',
-    },
-});
-
 function getFileNameFromUrl(url: string): string {
     const urlParts = url.split('/');
     return urlParts[urlParts.length - 1];
-}
-
-async function processImage(url: string): Promise<string> {
-    const fileName = getFileNameFromUrl(url);
-    const key = `images/${fileName}`;
-
-    const getCommand = new GetObjectCommand({
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-        Key: key,
-    });
-
-    const response = await s3.send(getCommand);
-    if (!response.Body) {
-        throw new Error('Failed to get image from R2');
-    }
-
-    const chunks = [];
-    for await (const chunk of response.Body as Readable) {
-        chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
-
-    const thumbnailBuffer = await sharp(buffer)
-        .resize(600, 600, {
-            fit: 'inside',
-            withoutEnlargement: true,
-            position: 'centre',
-        })
-        .jpeg({ quality: 80 })
-        .toBuffer();
-
-    const thumbnailFileName = `thumb_${fileName}`;
-    const thumbnailKey = `thumbnails/${thumbnailFileName}`;
-
-    const putCommand = new PutObjectCommand({
-        Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME,
-        Key: thumbnailKey,
-        Body: thumbnailBuffer,
-        ContentType: 'image/jpeg',
-    });
-
-    await s3.send(putCommand);
-
-    return `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${thumbnailKey}`;
 }
 
 const schema = z.object({
@@ -299,33 +241,8 @@ export async function POST(
 
     const { urls } = result.data;
 
-    try {
-        const processedImages = await Promise.all(
-            urls.map(async (url) => {
-                const thumbnailUrl = await processImage(url);
-                return {
-                    url,
-                    thumbnailUrl,
-                    albumId: parseInt(albumId),
-                };
-            }),
-        );
-
-        await prisma.picture.createMany({
-            data: processedImages,
-        });
-    } catch {
-        return NextResponse.json(
-            {
-                errors: [
-                    {
-                        field: 'internal_server_error',
-                        message: '处理图片失败',
-                    },
-                ],
-            },
-            { status: 500 },
-        );
+    for (const url of urls) {
+        await thumbnail(url, parseInt(albumId));
     }
 
     return NextResponse.json({ status: 200 });

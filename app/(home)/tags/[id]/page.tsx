@@ -8,7 +8,7 @@ import {
     Divider,
 } from '@mui/material';
 import { AlbumsGrid } from '@/app/_components/album';
-import { useTag, useTagAlbums } from '@/lib/fetcher/fetchers';
+import { useTag, useTagAlbums } from '@/lib/fetchers';
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 

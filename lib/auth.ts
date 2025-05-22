@@ -1,4 +1,4 @@
-import { getSessionUser } from '@/lib/session/getSession';
+import { getSessionUser } from '@/lib/session';
 import prisma from '@/lib/db';
 import { headers } from 'next/headers';
 
