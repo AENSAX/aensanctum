@@ -1,11 +1,11 @@
-import { User, Album, AlbumDetail, Picture, Tag } from './types';
+import { User, Album, AlbumDetail, Picture, Tag, ErrorResponse } from './types';
 import useSWR from 'swr';
 
 export const fetcher = async (url: string) => {
     const res = await fetch(url);
     if (!res.ok) {
         const result = await res.json();
-        throw new Error(result.errors);
+        throw new ErrorResponse(result.errors);
     }
     return res.json();
 };

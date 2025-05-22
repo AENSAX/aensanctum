@@ -19,7 +19,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import EditIcon from '@mui/icons-material/Edit';
 import LockIcon from '@mui/icons-material/Lock';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { AlbumDetail, Album } from '@/lib/types';
+import { AlbumDetail, Album, ErrorResponse } from '@/lib/types';
 import { tagsFormater, useUser } from '@/lib/fetchers';
 import { useState, useRef } from 'react';
 import { mutate } from 'swr';
@@ -853,7 +853,7 @@ export function EditAlbumInfo({
                     });
                     if (!response.ok) {
                         const result = await response.json();
-                        throw result;
+                        throw new ErrorResponse(result.errors);
                     }
                     if (onSuccess) {
                         mutate(`/api/albums/${album.id}`);

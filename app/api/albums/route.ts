@@ -82,7 +82,10 @@ export async function POST(request: Request) {
                     .max(100, '标签不能超过100个字符'),
             )
             .min(1, '至少需要一个标签')
-            .max(50, '最多只能添加50个标签'),
+            .max(50, '最多只能添加50个标签')
+            .refine((tags) => new Set(tags).size === tags.length, {
+                message: '标签不能重复',
+            }),
         isPrivate: z.boolean({
             required_error: '缺少可见性信息',
         }),
@@ -116,16 +119,12 @@ export async function POST(request: Request) {
     const { name, tags, isPrivate } = result.data;
     const tagIds = await Promise.all(
         tags.map(async (t) => {
-            const existTag = await prisma.tag.findFirst({
+            const tag = await prisma.tag.upsert({
                 where: { text: t },
+                update: {},
+                create: { text: t },
             });
-            if (existTag) {
-                return existTag.id;
-            }
-            const newTag = await prisma.tag.create({
-                data: { text: t },
-            });
-            return newTag.id;
+            return tag.id;
         }),
     );
     const searchText = name + tags.join('');

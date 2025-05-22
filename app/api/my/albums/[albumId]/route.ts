@@ -101,7 +101,10 @@ export async function PUT(
                     .max(100, '标签不能超过100个字符'),
             )
             .min(1, '至少需要一个标签')
-            .max(50, '最多只能添加50个标签'),
+            .max(50, '最多只能添加50个标签')
+            .refine((tags) => new Set(tags).size === tags.length, {
+                message: '标签不能重复',
+            }),
         isPrivate: z.boolean({
             required_error: '缺少可见性信息',
         }),
