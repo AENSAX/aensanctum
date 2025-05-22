@@ -137,12 +137,6 @@ export async function POST(request: Request) {
         }),
     );
     const searchText = name + tags.join('');
-    await prisma.albumTag.createMany({
-        data: tagIds.map((tagId) => ({
-            tagId,
-            albumId: album.id,
-        })),
-    });
     const album = await prisma.album.create({
         data: {
             name,
@@ -151,6 +145,13 @@ export async function POST(request: Request) {
             searchText,
         },
     });
+    await prisma.albumTag.createMany({
+        data: tagIds.map((tagId) => ({
+            tagId,
+            albumId: album.id,
+        })),
+    });
+
     return NextResponse.json(
         {
             id: album.id,
