@@ -84,7 +84,10 @@ export default function MePage() {
 
     return (
         <Container maxWidth="xl">
-            <UserInfoCard userInfo={user} albumsCount={currentAlbums.length} />
+            <UserInfoCard
+                userInfo={user}
+                albumsCount={paginatedAlbums?.count || 0}
+            />
             <Box sx={{ width: '100%' }}>
                 <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                     <Tabs
