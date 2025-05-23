@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 import { checkAuth } from '@/lib/auth';
 import s3 from '@/lib/s3';
+import { recycle } from '@/lib/workers';
 
 const allowedTypes = [
     'image/jpeg',
@@ -88,9 +89,11 @@ export async function POST(
 
     try {
         const presignedUrl = await getSignedUrl(s3, putCommand, {
-            expiresIn: 3600,
+            expiresIn: 300,
         });
         const publicUrl = `https://${process.env.CLOUDFLARE_R2_PUBLIC_DOMAIN}/${key}`;
+
+        await recycle(key, 300);
 
         return NextResponse.json({
             presignedUrl,
