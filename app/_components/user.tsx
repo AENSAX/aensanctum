@@ -1,10 +1,11 @@
 import {
     Typography,
     Box,
-    Card,
-    CardContent,
+    Paper,
     Avatar,
     Button,
+    useTheme,
+    useMediaQuery,
 } from '@mui/material';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useState } from 'react';
@@ -12,7 +13,13 @@ import { useRouter } from 'next/navigation';
 import { ConfirmDialog } from '@/app/_components/dialog';
 import { User } from '@/lib/types';
 
-export function UserInfoCard({ userInfo }: { userInfo: User }) {
+export function UserInfoCard({
+    userInfo,
+    albumsCount,
+}: {
+    userInfo: User;
+    albumsCount: number;
+}) {
     const router = useRouter();
     const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
@@ -23,65 +30,72 @@ export function UserInfoCard({ userInfo }: { userInfo: User }) {
         router.push('/login');
     };
 
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                width: '100%',
-            }}
-        >
-            <Card
-                sx={{
-                    width: '60%',
-                    mt: 4,
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    color: 'black',
-                    position: 'relative',
-                }}
-            >
-                <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                        <Avatar
-                            sx={{
-                                width: 64,
-                                height: 64,
-                                fontSize: '1.5rem',
-                            }}
+        <Box sx={{ p: 2, mx: 'auto' }}>
+            <Paper sx={{ p: 3 }}>
+                <Box
+                    sx={{
+                        display: 'flex',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        alignItems: isMobile ? 'center' : 'flex-start',
+                        gap: 2,
+                        mb: 3,
+                    }}
+                >
+                    <Avatar
+                        sx={{
+                            width: 64,
+                            height: 64,
+                            fontSize: '1.5rem',
+                        }}
+                    >
+                        {userInfo?.name?.[0]?.toUpperCase() || '?'}
+                    </Avatar>
+                    <Box
+                        sx={{
+                            textAlign: isMobile ? 'center' : 'left',
+                        }}
+                    >
+                        <Typography variant="h6" component="div">
+                            {userInfo?.name || '未登录'}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            UID: {userInfo?.id || '---'}
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5 }}
                         >
-                            {userInfo?.name?.[0]?.toUpperCase() || '?'}
-                        </Avatar>
-                        <Box sx={{ ml: 2 }}>
-                            <Typography variant="h6" component="div">
-                                {userInfo?.name || '未登录'}
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                                UID: {userInfo?.id || '---'}
-                            </Typography>
-                            <Typography
-                                variant="body2"
-                                color="text.secondary"
-                                sx={{ mt: 0.5 }}
-                            >
-                                Email: {userInfo?.email || '---'}
-                            </Typography>
-                        </Box>
+                            Email: {userInfo?.email || '---'}
+                        </Typography>
+                        <Typography sx={{ mt: 2, fontWeight: 'medium' }}>
+                            共计上传 {albumsCount} 个图集
+                        </Typography>
                     </Box>
+                </Box>
+
+                <Box
+                    sx={{
+                        display: 'flex',
+                        justifyContent: isMobile ? 'center' : 'flex-end',
+                        mt: 2,
+                    }}
+                >
                     <Button
                         variant="outlined"
                         color="error"
                         startIcon={<LogoutIcon />}
                         onClick={() => setLogoutDialogOpen(true)}
-                        sx={{
-                            position: 'absolute',
-                            right: 16,
-                            bottom: 16,
-                        }}
+                        sx={{ minWidth: 120 }}
                     >
                         登出
                     </Button>
-                </CardContent>
-            </Card>
+                </Box>
+            </Paper>
 
             <ConfirmDialog
                 isOpen={logoutDialogOpen}
