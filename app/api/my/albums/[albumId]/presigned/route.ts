@@ -75,7 +75,9 @@ export async function POST(
 
     const { fileType, fileName } = result.data;
     const fileExtension = fileName.slice(fileName.lastIndexOf('.'));
-    const uniqueFileName = `${uuidv4()}${fileExtension}`;
+    const now = new Date().toISOString();
+    const timestamp = now.replace(/[:.]/g, '-');
+    const uniqueFileName = `${timestamp}_${uuidv4()}${fileExtension}`;
     const key = `images/${uniqueFileName}`;
 
     const putCommand = new PutObjectCommand({
