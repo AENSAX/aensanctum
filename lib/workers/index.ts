@@ -2,9 +2,11 @@ import PgBoss from 'pg-boss';
 import thumbnailRunner, {
     type JobParams as ThumbnailParams,
 } from './thumbnail';
+import recycleRunner, { type JobParams as RecycleParams } from './recycle';
 
 export enum Jobs {
     thumbnail = 'thumbnail',
+    recycle = 'recycle',
 }
 
 const singleton = async () => {
@@ -17,6 +19,9 @@ const singleton = async () => {
     }
     await boss.work<ThumbnailParams>(Jobs.thumbnail, async ([job]) => {
         return thumbnailRunner(boss, job);
+    });
+    await boss.work<RecycleParams>(Jobs.recycle, async ([job]) => {
+        return recycleRunner(boss, job);
     });
     return boss;
 };
@@ -38,5 +43,17 @@ export async function thumbnail(imageURL: string, albumId: number) {
             retryLimit: 5,
             retryDelay: 300,
         },
+    );
+}
+
+export async function recycle(key: string, delay: number) {
+    await boss.sendAfter(
+        Jobs.recycle,
+        { key },
+        {
+            retryLimit: 5,
+            retryDelay: 300,
+        },
+        delay,
     );
 }
