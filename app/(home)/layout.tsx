@@ -63,6 +63,14 @@ export default function HomeLayout({
             href: '/index/search',
         },
         {
+            icon: <CollectionsIcon />,
+            href: '/index/albums',
+        },
+        {
+            icon: <LabelIcon />,
+            href: '/index/tags',
+        },
+        {
             icon: <CreateNewFolderIcon />,
             onClick: () => setCreateAlbumDialogOpen(true),
         },

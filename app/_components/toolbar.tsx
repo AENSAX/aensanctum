@@ -140,7 +140,16 @@ export function TopBar({
                 </Box>
 
                 {/* 导航标签页 */}
-                <Box sx={{ ml: 4 }}>
+                <Box
+                    sx={{
+                        ml: 4,
+                        display: {
+                            xs: 'none',
+                            sm: 'block',
+                            md: 'block',
+                        },
+                    }}
+                >
                     <Tabs
                         value={getTabValue()}
                         onChange={handleTabChange}

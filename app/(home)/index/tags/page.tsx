@@ -6,6 +6,7 @@ import {
     Container,
     Alert,
     CircularProgress,
+    Typography,
 } from '@mui/material';
 import { useState } from 'react';
 import { useTags } from '@/lib/fetchers';
@@ -72,7 +73,7 @@ export default function TagsPage() {
                                 height: '200px',
                             }}
                         >
-                            <Alert severity="info">暂无标签数据</Alert>
+                            <Typography>暂无标签数据</Typography>
                         </Box>
                     ) : (
                         <>
