@@ -87,11 +87,15 @@ interface TopBarTab {
 interface TopBarProps {
     tabs: TopBarTab[];
     onLeftMenuItemClick: () => void;
+    logoHref: string;
+    personButtonHref: string;
 }
 
 export function TopBar({
     tabs,
     onLeftMenuItemClick: onMenuClick,
+    logoHref,
+    personButtonHref,
 }: TopBarProps) {
     const router = useRouter();
     const pathname = usePathname();
@@ -128,7 +132,7 @@ export function TopBar({
 
                 {/* Logo 区域 */}
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Link href="/index/search" passHref>
+                    <Link href={logoHref} passHref>
                         <Image
                             src="/logo.png"
                             alt="AenSanctum Logo"
@@ -199,7 +203,7 @@ export function TopBar({
                 {/* 个人中心按钮 */}
                 <IconButton
                     component={Link}
-                    href="/me"
+                    href={personButtonHref}
                     sx={{
                         '&:hover': {
                             backgroundColor: 'rgba(255, 255, 255, 0.1)', // 悬停效果

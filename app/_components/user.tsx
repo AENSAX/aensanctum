@@ -83,8 +83,19 @@ export function UserInfoCard({
                         display: 'flex',
                         justifyContent: isMobile ? 'center' : 'flex-end',
                         mt: 2,
+                        gap: 2,
                     }}
                 >
+                    {userInfo?.isAdmin && (
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => router.push('/admin/users')}
+                            sx={{ minWidth: 120 }}
+                        >
+                            管理后台
+                        </Button>
+                    )}
                     <Button
                         variant="outlined"
                         color="error"

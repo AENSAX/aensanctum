@@ -46,7 +46,12 @@ export default function AdminLayout({
     return (
         <Box sx={{ display: 'flex' }}>
             {/* 顶部导航栏 */}
-            <TopBar tabs={topBarTabs} onLeftMenuItemClick={() => {}} />
+            <TopBar
+                tabs={topBarTabs}
+                onLeftMenuItemClick={() => {}}
+                logoHref="/admin/users"
+                personButtonHref="/admin/me"
+            />
 
             {/* 主内容区域 */}
             <Box

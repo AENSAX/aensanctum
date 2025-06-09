@@ -96,7 +96,6 @@ export async function POST() {
         );
     }
     const updatedCount = await prisma.$transaction(async (tx) => {
-        // 获取所有相册及其标签
         const albums = await tx.album.findMany({
             include: {
                 tags: {
@@ -106,7 +105,6 @@ export async function POST() {
                 },
             },
         });
-        // 批量更新每个相册的 searchText
         const updates = albums.map((album) => {
             const tagTexts = album.tags.map((albumTag) => albumTag.tag.text);
             const searchText = album.name + tagTexts.join('');

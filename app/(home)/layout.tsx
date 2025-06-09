@@ -81,6 +81,8 @@ export default function HomeLayout({
             <TopBar
                 tabs={topBarTabs}
                 onLeftMenuItemClick={() => setLeftBarOpen(!leftBarOpen)}
+                logoHref="/index/search"
+                personButtonHref="/me"
             />
 
             <LeftBar isOpen={leftBarOpen} items={leftBarItems} />

@@ -10,6 +10,8 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import CloseIcon from '@mui/icons-material/Close';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { useState } from 'react';
 import { useUser } from '@/lib/fetchers';
 import { ConfirmDialog } from './dialog';
@@ -19,9 +21,21 @@ interface ImagePreviewProps {
     open: boolean;
     onClose: () => void;
     image: Picture;
+    onPrevious: () => void; // 切换到上一张
+    onNext: () => void; // 切换到下一张
+    hasPrevious: boolean; // 是否有上一张
+    hasNext: boolean;
 }
 
-function ImagePreview({ open, onClose, image }: ImagePreviewProps) {
+function ImagePreview({
+    open,
+    onClose,
+    image,
+    onPrevious,
+    onNext,
+    hasPrevious,
+    hasNext,
+}: ImagePreviewProps) {
     return (
         <Dialog
             open={open}
@@ -59,6 +73,61 @@ function ImagePreview({ open, onClose, image }: ImagePreviewProps) {
                     }}
                 >
                     <CloseIcon />
+                </IconButton>
+            </Box>
+
+            {/* 左右切换按钮 */}
+            <Box
+                sx={{
+                    position: 'absolute',
+                    left: 16,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 1,
+                }}
+            >
+                <IconButton
+                    onClick={onPrevious}
+                    disabled={!hasPrevious}
+                    sx={{
+                        color: 'white',
+                        bgcolor: 'rgba(0, 0, 0, 0.5)',
+                        '&:hover': {
+                            bgcolor: 'rgba(0, 0, 0, 0.7)',
+                        },
+                        '&.Mui-disabled': {
+                            display: 'none',
+                        },
+                    }}
+                >
+                    <NavigateBeforeIcon />
+                </IconButton>
+            </Box>
+
+            <Box
+                sx={{
+                    position: 'absolute',
+                    right: 16,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    zIndex: 1,
+                }}
+            >
+                <IconButton
+                    onClick={onNext}
+                    disabled={!hasNext}
+                    sx={{
+                        color: 'white',
+                        bgcolor: 'rgba(0, 0, 0, 0.5)',
+                        '&:hover': {
+                            bgcolor: 'rgba(0, 0, 0, 0.7)',
+                        },
+                        '&.Mui-disabled': {
+                            display: 'none',
+                        },
+                    }}
+                >
+                    <NavigateNextIcon />
                 </IconButton>
             </Box>
 
@@ -111,6 +180,22 @@ export function PicturesGrid({
     const { user, userErrors, userLoading } = useUser();
     const [deletePictureConfirm, setDeletePictureConfirm] = useState(false);
     const [pictureDeleting, setPictureDeleting] = useState(false);
+
+    const currentIndex = selectedPicture
+        ? pictures.findIndex((p) => p.id === selectedPicture.id)
+        : -1;
+
+    const handlePrevious = () => {
+        if (currentIndex > 0) {
+            setSelectedPicture(pictures[currentIndex - 1]);
+        }
+    };
+
+    const handleNext = () => {
+        if (currentIndex < pictures.length - 1) {
+            setSelectedPicture(pictures[currentIndex + 1]);
+        }
+    };
 
     if (userLoading) {
         return (
@@ -281,6 +366,10 @@ export function PicturesGrid({
                     open={!!selectedPicture}
                     onClose={handleClose}
                     image={selectedPicture}
+                    onPrevious={handlePrevious}
+                    onNext={handleNext}
+                    hasPrevious={currentIndex > 0}
+                    hasNext={currentIndex < pictures.length - 1}
                 />
             )}
         </>
