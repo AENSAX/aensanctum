@@ -143,46 +143,66 @@ export async function PUT(
         searchText,
         isPrivate: isPrivate ?? currentAlbum.isPrivate,
     };
-    await prisma.$transaction(async (tx) => {
-        await tx.albumTag.deleteMany({
-            where: { albumId: parseInt(albumId) },
+    try {
+        await prisma.$transaction(async (tx) => {
+            await tx.album.update({
+                where: {
+                    id: parseInt(albumId),
+                    ownerId: authId,
+                },
+                data: updatedData,
+            });
+
+            await tx.albumTag.deleteMany({
+                where: { albumId: parseInt(albumId) },
+            });
+
+            const tagIds = await Promise.all(
+                tags.map(async (t) => {
+                    const existTag = await tx.tag.findFirst({
+                        where: { text: t },
+                    });
+                    if (existTag) {
+                        return existTag.id;
+                    }
+                    const newTag = await tx.tag.create({
+                        data: { text: t },
+                    });
+                    return newTag.id;
+                }),
+            );
+
+            await tx.albumTag.createMany({
+                data: tagIds.map((tagId) => ({
+                    albumId: parseInt(albumId),
+                    tagId,
+                })),
+            });
+
+            await tx.tag.deleteMany({
+                where: {
+                    albums: {
+                        none: {},
+                    },
+                },
+            });
         });
-        const tagIds = await Promise.all(
-            tags.map(async (t) => {
-                const existTag = await tx.tag.findFirst({
-                    where: { text: t },
-                });
-                if (existTag) {
-                    return existTag.id;
-                }
-                const newTag = await tx.tag.create({
-                    data: { text: t },
-                });
-                return newTag.id;
-            }),
-        );
-        await tx.albumTag.createMany({
-            data: tagIds.map((tagId) => ({
-                albumId: parseInt(albumId),
-                tagId,
-            })),
-        });
-    });
-    await prisma.album.update({
-        where: {
-            id: parseInt(albumId),
-            ownerId: authId,
-        },
-        data: updatedData,
-    });
-    await prisma.tag.deleteMany({
-        where: {
-            albums: {
-                none: {},
+
+        return NextResponse.json({ status: 200 });
+    } catch (error) {
+        console.error('Transaction failed:', error);
+        return NextResponse.json(
+            {
+                errors: [
+                    {
+                        field: 'database',
+                        message: '数据库操作失败，请重试',
+                    },
+                ],
             },
-        },
-    });
-    return NextResponse.json({ status: 200 });
+            { status: 500 },
+        );
+    }
 }
 
 function getFileNameFromUrl(url: string): string {
